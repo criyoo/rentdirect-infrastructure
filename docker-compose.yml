@@ -1,0 +1,228 @@
+# Postgres Port 5600
+# Redis/valkey Port 6600
+# Minio Port 9600
+# Minio Console Port 9601
+# web 3600
+# api 8600
+
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    environment:
+      POSTGRES_DB: rentdirectdb
+      POSTGRES_USER: rentdirect
+      POSTGRES_PASSWORD: rentdirect
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U rentdirect -d rentdirectdb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    ports:
+      - "5600:5432"
+    networks:
+      - rentdirect-network
+
+  valkey:
+    image: valkey/valkey:9.1.0-alpine
+    environment:
+      ALLOW_EMPTY_PASSWORD: yes
+    healthcheck:
+      test: [ "CMD-SHELL", "valkey-cli ping || redis-cli ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "6600:6379"
+    volumes:
+      - valkey_data:/data
+    networks:
+      - rentdirect-network
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: server /data --address ":9000" --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9600:9000"
+      - "9601:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - rentdirect-network
+
+  minio-create-bucket:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          sleep 1
+        done
+        mc mb --ignore-existing local/rentdirect-local-media
+        mc anonymous set download local/rentdirect-local-media
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - rentdirect-network
+
+  cloudflared:
+    build:
+      context: ./cloudflared
+      dockerfile: Dockerfile
+    environment:
+      API_ORIGIN_URL: http://api:8000
+      CLOUDFLARE_LOG_FILE: /data/cloudflare/cloudflared.log
+      CLOUDFLARE_TUNNEL_URL_FILE: /data/cloudflared/tunnel-url
+    healthcheck:
+      test: [ "CMD-SHELL", "test -s /data/cloudflared/tunnel-url && grep -q '^https://.*\\.trycloudflare\\.com$' /data/cloudflared/tunnel-url" ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+    volumes:
+      - cloudflared_data:/data
+    networks:
+      - rentdirect-network
+
+  api-migrate:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - ../apps/api/.env.local
+    command:
+      - /bin/sh
+      - -c
+      - python manage.py migrate --noinput && python manage.py seed_demo_data
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      COLLECTSTATIC_ON_STARTUP: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio-create-bucket:
+        condition: service_completed_successfully
+    volumes:
+      - ../apps/api:/app
+      - media_files:/app/uploads
+    networks:
+      - rentdirect-network
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+      target: cloudflare
+    env_file:
+      - ../apps/api/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      SEED_DEMO_ACCOUNTS_WATCH: "1"
+      SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS: "2"
+      FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
+      CLOUDFLARE_WAIT_ATTEMPTS: "60"
+      CLOUDFLARE_TUNNEL_URL_FILE: /data/cloudflared/tunnel-url
+      FLUTTERWAVE_WEBHOOK_PATH: /api/v1/payments/webhook/flutterwave # update base url on restart
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      cloudflared:
+        condition: service_healthy
+      minio-create-bucket:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health/ready >/dev/null" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - ../apps/api:/app
+      - cloudflared_data:/data:ro
+      - media_files:/app/uploads
+    ports:
+      - "8600:8000"
+    networks:
+      - rentdirect-network
+
+  payout-worker:
+    build:
+      context: ../apps/api
+      target: development
+    env_file:
+      - ../apps/api/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS: "300"
+      FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      minio-create-bucket:
+        condition: service_completed_successfully
+    volumes:
+      - ../apps/api:/app
+      - media_files:/app/uploads
+    command: python manage.py watch_ready_payouts
+    restart: unless-stopped
+    networks:
+      - rentdirect-network
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile.local
+    environment:
+      VITE_API_URL: http://localhost:8600/api/v1
+      VITE_MEDIA_URL: http://localhost:8600/uploads
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3600').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    working_dir: /app
+    volumes:
+      - ../apps/web:/app
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - "3600:3600"
+    networks:
+      - rentdirect-network
+
+volumes:
+  postgres_data:
+  valkey_data:
+  minio_data:
+  media_files:
+  cloudflared_data:
+
+networks:
+  rentdirect-network:
