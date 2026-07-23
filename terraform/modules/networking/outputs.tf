@@ -23,7 +23,8 @@ output "private_subnet_ids" {
 }
 
 output "api_target_group_arn" {
-  value = aws_lb_target_group.api.arn
+  value      = aws_lb_target_group.api.arn
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
 }
 
 output "alb_dns_name" {
