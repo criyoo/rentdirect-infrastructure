@@ -1,0 +1,202 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+    working-directory: terraform
+
+env:
+  AWS_USE_PROFILE: "0"
+  AWS_REGION: "eu-west-1"
+  TERRAFORM_VERSION: "1.15.0"
+  WORKSPACE: ${{ vars.WORKSPACE }}
+  ENCRYPTED_ENV_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}.age"
+  DECRYPTED_ENV_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}"
+  AGE_KEY_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}.key"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      changes: ${{ steps.filter.outputs.infrastructure }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            infrastructure:
+              - "terraform/**"
+              - ".github/workflows/**"
+
+  setup:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install age
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y age
+
+      - name: Create age key file
+        run: |
+          printf '%s\n' "${{ secrets.AGE_SECRET_KEY }}" > "${{ env.AGE_KEY_FILE }}"
+          chmod 600 "${{ env.AGE_KEY_FILE }}"
+
+      - name: Decrypt secrets key
+        run: |
+          age --decrypt --identity "${{ env.AGE_KEY_FILE }}" --output "${{ env.DECRYPTED_ENV_FILE }}" "${{ env.ENCRYPTED_ENV_FILE }}"
+          chmod 600 "${{ env.DECRYPTED_ENV_FILE }}"
+
+      - name: Verify decrypted file exists
+        run: |
+          pwd
+          ls -la envs/secrets
+          test -f "${{ env.DECRYPTED_ENV_FILE }}"
+
+      - name: Upload decrypted file
+        uses: actions/upload-artifact@v4
+        with:
+          name: decrypted-secrets
+          path: terraform/${{ env.DECRYPTED_ENV_FILE }}
+          retention-days: 1
+          include-hidden-files: true
+
+  lint:
+    needs:
+      - detect-changes
+      - setup
+    if: needs.detect-changes.outputs.changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download decrypted secrets
+        uses: actions/download-artifact@v4
+        with:
+          name: decrypted-secrets
+          path: terraform/envs/secrets
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROOT_ACCOUNT_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "${{ env.TERRAFORM_VERSION }}"
+
+      - name: Terraform validate
+        run: |
+          make fmt
+          make validate
+
+  plan:
+    needs:
+      - detect-changes
+      - lint
+    if: needs.detect-changes.outputs.changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download decrypted secrets
+        uses: actions/download-artifact@v4
+        with:
+          name: decrypted-secrets
+          path: terraform/envs/secrets
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "${{ env.TERRAFORM_VERSION }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROOT_ACCOUNT_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform plan
+        run: make plan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: terraform/tfplan
+          retention-days: 1
+
+  apply:
+    needs:
+      - detect-changes
+      - plan
+    if: needs.detect-changes.outputs.changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    steps:
+      - name: Manual approval before apply
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: criyoo
+          minimum-approvals: 1
+          issue-title: "Approve Terraform apply"
+          issue-body: "Please approve or deny Terraform apply for production."
+
+      - uses: actions/checkout@v4
+
+      - name: Download decrypted secrets
+        uses: actions/download-artifact@v4
+        with:
+          name: decrypted-secrets
+          path: terraform/envs/secrets
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: terraform
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "${{ env.TERRAFORM_VERSION }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROOT_ACCOUNT_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform apply
+        run: make apply

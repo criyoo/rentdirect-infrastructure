@@ -96,7 +96,7 @@ unlock:
 
 
 # Docker
-docker-down:
+down:
 	@if [ -n "$$(docker ps -aq)" ]; then \
 		echo "Deleting Docker containers, images, volumes, and networks..."; \
 		docker container stop $$(docker ps -aq) > /dev/null; \
@@ -105,21 +105,19 @@ docker-down:
 		echo "No Docker containers to delete."; \
 	fi
 
-docker-up:
+up:
 	@docker compose up
 	@docker compose run --rm api python3 manage.py makemigrations
 	@docker compose run --rm api python3 manage.py migrate
 
-docker-build:
+build:
 	@docker compose up --build
+
+migrate:
 	@docker compose run --rm api python3 manage.py makemigrations
 	@docker compose run --rm api python3 manage.py migrate
 
-docker-migrate:
-	@docker compose run --rm api python3 manage.py makemigrations
-	@docker compose run --rm api python3 manage.py migrate
-
-docker-admin:
+admin:
 	@docker compose exec \
 	  -e DJANGO_SUPERUSER_EMAIL=admin@rentdirect.local \
 	  -e DJANGO_SUPERUSER_PASSWORD=ifG0dbi4mi \
@@ -128,19 +126,19 @@ docker-admin:
 		--role "admin" \
 		--name "Admin"
 
-docker-seed:
+seed:
 	@docker compose exec api python3 manage.py seed_demo_data
 
-docker-shell:
+shell:
 	@docker compose run --rm api python3 manage.py shell
 
-docker-test:
+test:
 	@docker compose run --rm api python3 manage.py test
 
-docker-web:
+web:
 	@npm -w apps/web run build
 
-docker-api:
+api:
 	@docker build -t rentdirect-api:local ./apps/api
 
 docker-tunnel:
