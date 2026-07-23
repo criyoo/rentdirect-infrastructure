@@ -8,7 +8,7 @@ on:
     inputs:
       run_delete_job:
         description: Set to true to run only delete-dev.
-        required: true # Optional: but forces the input tp be provided in the manual run in the UI
+        required: false # Optional: but forces the input tp be provided in the manual run in the UI
         default: true # This controls whihc of the jobs run (when true only the delete-dev job runs)
         type: boolean
 
