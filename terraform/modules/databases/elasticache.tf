@@ -12,7 +12,7 @@ resource "random_password" "valkey_auth" {
 
 resource "aws_ssm_parameter" "valkey_auth_token" {
   for_each = var.cache.enabled && var.cache.transit_encryption_enabled ? { enabled = true } : {}
-  name     = "/${var.project_name}/${var.environment}/valkey/auth_token"
+  name     = "/${var.project_name}/${var.environment}/VALKEY_AUTH_TOKEN"
   type     = "SecureString"
   value    = random_password.valkey_auth["enabled"].result
   tags     = var.common_tags
