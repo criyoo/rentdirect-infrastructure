@@ -81,7 +81,7 @@ module "databases" {
 module "ecs_service" {
   source = "./modules/ecs_service"
 
-  depends_on = [terraform_data.backend_image_bootstrap]
+  # depends_on = [terraform_data.backend_image_bootstrap]
 
   name_prefix               = local.name_prefix
   environment               = var.environment
