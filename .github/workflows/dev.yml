@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
-      changes: ${{ steps.filter.outputs.infrastructure }}
+      changes: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +46,7 @@ jobs:
         id: filter
         with:
           filters: |
-            infrastructure:
+            infra:
               - "Makefile"
               - "scripts/**"
               - "terraform/**"
@@ -198,7 +198,7 @@ jobs:
 
 
   delete-dev:
-    if: vars.RUN_DELETE_JOB == 'true'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.RUN_DELETE_JOB == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
