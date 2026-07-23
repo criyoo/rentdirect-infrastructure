@@ -5,6 +5,8 @@
 .env.prod
 # Encrypted environment files should be tracked.
 !.env.*.age
+# Environment templates should be tracked.
+!.env.*.example
 *.pem
 *.key
 *.cert

@@ -3,9 +3,11 @@
 set -euo pipefail
 
 WORKSPACE="${1:-dev}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+INFRA_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 AGE_KEY_FILE="${AGE_KEY_FILE:-${HOME}/.config/age/rentdirect/keys.txt}"
-AGE_ENCRYPTED_FILE="terraform/envs/secrets/.env.${WORKSPACE}.age"
-AGE_DECRYPTED_FILE="terraform/envs/secrets/.env.${WORKSPACE}"
+AGE_DECRYPTED_FILE="${INFRA_DIR}/terraform/envs/secrets/.env.${WORKSPACE}"
+AGE_ENCRYPTED_FILE="${AGE_DECRYPTED_FILE}.age"
 
 if ! command -v age >/dev/null 2>&1; then
     echo "Error: 'age' is not installed."
@@ -16,7 +18,7 @@ fi
 if [ -f "$AGE_ENCRYPTED_FILE" ] && [ ! -f "$AGE_DECRYPTED_FILE" ]; then
     if [ ! -f "$AGE_KEY_FILE" ]; then
         echo "Error: age key not found at $AGE_KEY_FILE"
-        echo "Run: bash scripts/setup.sh"
+        echo "Run: make setup"
         exit 1
     fi
 

@@ -1,145 +1,132 @@
 SHELL := /bin/bash
 
-TF ?= terraform
 WORKSPACE ?= dev
+AWS_USE_PROFILE ?= 1
 AWS_PROFILE ?= root
 
-ENVIRONMENT ?= $(WORKSPACE)
-WORKSPACE_VARS := -var-file=terraform/envs/$(ENVIRONMENT).tfvars
+INFRA_MAKE := $(MAKE) -C terraform WORKSPACE=$(WORKSPACE) AWS_USE_PROFILE=$(AWS_USE_PROFILE)
+ifneq ($(AWS_USE_PROFILE),0)
+INFRA_MAKE += AWS_PROFILE=$(AWS_PROFILE)
+endif
 
-AWS_DEFAULT_PROFILE ?= $(AWS_PROFILE)
-AWS_WORKLOAD_PROFILE ?= $(WORKSPACE)-rentdirect
-AWS_SDK_LOAD_CONFIG ?= 1
+COMPOSE := docker compose -f docker-compose.yml
 
-BASH_CMD := bash
-TF_DIR := -chdir=terraform
-ENV_FILE := terraform/envs/secrets/.env.$(ENVIRONMENT)
-LOAD_ENV := set -a && . $(ENV_FILE) && set +a
-LOCK_FILE := s3://rentdirect-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
-STATE_FILE := s3://rentdirect-statefile/envs/$(WORKSPACE)/rentdirect.tfstate
+.PHONY: setup load-env decrypt encrypt encrypt-all fmt fmt-check init upgrade reconfig validate workspace lint refresh plan apply apply-plan destroy state-list list console unlock down build up migrate admin seed shell test web api docker-tunnel prune
 
-
-export WORKSPACE
-export ENVIRONMENT
-export AWS_PROFILE
-export AWS_DEFAULT_PROFILE
-export AWS_WORKLOAD_PROFILE
-export AWS_SDK_LOAD_CONFIG
-
-.PHONY:  load-env setup encrypt decrypt fmt init reconfig workspace lint plan apply destroy state-list console unlock backend frontend migrate admin help
-
-
-# Cryptography
-load-env: decrypt
-	@if [ ! -f "$(ENV_FILE)" ]; then \
-		echo "Missing $(ENV_FILE). Copy the matching .example file first."; \
-		exit 1; \
-	fi
-
+# Secrets
 setup:
-	@$(BASH_CMD) scripts/secrets/setup.sh
+	@$(INFRA_MAKE) setup
 
-encrypt:
-	@$(BASH_CMD) scripts/secrets/encrypt.sh $(WORKSPACE)
+load-env:
+	@$(INFRA_MAKE) load-env
 
 decrypt:
-	@$(BASH_CMD) scripts/secrets/decrypt.sh $(WORKSPACE)
+	@$(INFRA_MAKE) decrypt
 
+encrypt:
+	@$(INFRA_MAKE) encrypt
 
+encrypt-all:
+	@$(INFRA_MAKE) encrypt-all
 
 # Terraform
 fmt:
-	@$(TF) $(TF_DIR) fmt -recursive
+	@$(INFRA_MAKE) fmt
 
-init: fmt
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) init -input=false -upgrade
+fmt-check:
+	@$(INFRA_MAKE) fmt-check
 
-reconfig: load-env fmt
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) init -input=false -reconfigure
+init:
+	@$(INFRA_MAKE) init
 
-workspace: init
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF) $(TF_DIR) workspace new $(WORKSPACE)
+upgrade:
+	@$(INFRA_MAKE) upgrade
 
-lint: load-env workspace
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) fmt -diff -check -recursive
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) validate
+reconfig:
+	@$(INFRA_MAKE) reconfig
 
-refresh: lint
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) refresh $(WORKSPACE_VARS)
+validate:
+	@$(INFRA_MAKE) validate
 
-plan: lint
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) plan $(WORKSPACE_VARS) -out=tfplan
+workspace:
+	@$(INFRA_MAKE) workspace
 
-apply: plan
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) apply tfplan
+lint:
+	@$(INFRA_MAKE) lint
 
-destroy: lint
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) destroy $(WORKSPACE_VARS)
+refresh:
+	@$(INFRA_MAKE) refresh
 
-state-list: lint
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) state list
+plan:
+	@$(INFRA_MAKE) plan
 
-console: lint
-	@$(LOAD_ENV) && $(TF) $(TF_DIR) console $(WORKSPACE_VARS)
+apply:
+	@$(INFRA_MAKE) apply
+
+apply-plan:
+	@$(INFRA_MAKE) apply-plan
+
+destroy:
+	@$(INFRA_MAKE) destroy
+
+state-list:
+	@$(INFRA_MAKE) state-list
+
+list:
+	@$(INFRA_MAKE) list
+
+console:
+	@$(INFRA_MAKE) console
 
 unlock:
-	@if pgrep -x terraform-ls >/dev/null; then \
-		pkill -x terraform-ls; \
-		sleep 2; \
-	fi
-	@if aws s3 ls $(LOCK_FILE) --profile $(AWS_PROFILE) >/dev/null 2>&1; then \
-		echo "Lock file found, removing..."; \
-		aws s3 rm $(LOCK_FILE) --profile $(AWS_PROFILE); \
-	else \
-		echo "No lock file found"; \
-	fi
-
+	@$(INFRA_MAKE) unlock
 
 # Docker
 down:
 	@if [ -n "$$(docker ps -aq)" ]; then \
 		echo "Deleting Docker containers, images, volumes, and networks..."; \
 		docker container stop $$(docker ps -aq) > /dev/null; \
-		docker compose down --rmi local --volumes --remove-orphans; \
+		$(COMPOSE) down --rmi local --volumes --remove-orphans; \
 	else \
 		echo "No Docker containers to delete."; \
 	fi
 
-up:
-	@docker compose up
-	@docker compose run --rm api python3 manage.py makemigrations
-	@docker compose run --rm api python3 manage.py migrate
-
 build:
-	@docker compose up --build
+	$(COMPOSE) build
+
+up:
+	$(COMPOSE) up
 
 migrate:
-	@docker compose run --rm api python3 manage.py makemigrations
-	@docker compose run --rm api python3 manage.py migrate
+	$(COMPOSE) run --rm api python manage.py makemigrations
+	$(COMPOSE) run --rm api python manage.py migrate
 
 admin:
-	@docker compose exec \
-	  -e DJANGO_SUPERUSER_EMAIL=admin@rentdirect.local \
-	  -e DJANGO_SUPERUSER_PASSWORD=ifG0dbi4mi \
-	  api python3 manage.py createsuperuser \
-	    --noinput \
-		--role "admin" \
-		--name "Admin"
+	$(COMPOSE) exec \
+		-e DJANGO_SUPERUSER_EMAIL=admin@rentdirect.local \
+		-e DJANGO_SUPERUSER_PASSWORD=ifG0dbi4mi \
+		-e DJANGO_SUPERUSER_NAME=Admin \
+		api python manage.py ensure_superuser
 
 seed:
-	@docker compose exec api python3 manage.py seed_demo_data
+	$(COMPOSE) exec api python manage.py seed_demo_data
 
 shell:
-	@docker compose run --rm api python3 manage.py shell
+	$(COMPOSE) run --rm api python manage.py shell
 
 test:
-	@docker compose run --rm api python3 manage.py test
+	$(COMPOSE) run --rm api python manage.py test
 
 web:
-	@npm -w apps/web run build
+	npm --prefix ../apps/web run build
 
 api:
-	@docker build -t rentdirect-api:local ./apps/api
+	docker build -t rentdirect-api:local ../apps/api
 
 docker-tunnel:
-	@docker compose exec cloudflared cat /data/cloudflared/tunnel-url
+	$(COMPOSE) exec cloudflared cat /data/cloudflared/tunnel-url
+
+prune:
+	@docker system df
+	@docker system prune -f
+	@docker volume prune -f

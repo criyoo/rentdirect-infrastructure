@@ -24,10 +24,10 @@ env:
   AWS_USE_PROFILE: "0"
   AWS_REGION: "eu-west-1"
   TERRAFORM_VERSION: "1.15.0"
-  WORKSPACE: ${{ vars.WORKSPACE }}
-  ENCRYPTED_ENV_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}.age"
-  DECRYPTED_ENV_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}"
-  AGE_KEY_FILE: "envs/secrets/.env.${{ vars.WORKSPACE }}.key"
+  WORKSPACE: "dev"
+  ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
+  DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
+  AGE_KEY_FILE: "envs/secrets/.env.dev.key"
 
 jobs:
   detect-changes:
@@ -43,6 +43,7 @@ jobs:
         with:
           filters: |
             infrastructure:
+              - "Makefile"
               - "scripts/**"
               - "terraform/**"
               - ".github/workflows/dev.yml"
@@ -114,9 +115,7 @@ jobs:
           terraform_version: "${{ env.TERRAFORM_VERSION }}"
 
       - name: Terraform validate
-        run: |
-          make fmt
-          make validate
+        run: make lint
 
   plan:
     needs:
@@ -191,4 +190,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform apply
-        run: make apply
+        run: make apply-plan
