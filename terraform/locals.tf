@@ -113,8 +113,9 @@ locals {
     POSTGRES_USER                                     = var.database.username
     POSTGRES_PORT                                     = "5432"
     DATABASE_SSL_REQUIRE                              = "true"
-    MIGRATE_ON_STARTUP                                = local.migrate_on_startup
+    MIGRATE_ON_STARTUP                                = "0"
     SEED_DEMO_ACCOUNTS                                = local.seed_demo_accounts
+    SEED_DEMO_ACCOUNTS_ON_STARTUP                     = "0"
     VALKEY_URL                                        = module.databases.valkey_url
     ENFORCE_PRODUCTION_HARDENING                      = local.is_prod ? "true" : "false"
     ENFORCE_FLUTTERWAVE_WEBHOOK_SIGNATURE             = local.is_prod ? "true" : "false"
@@ -130,10 +131,8 @@ locals {
     SECURE_HSTS_INCLUDE_SUBDOMAINS                    = local.is_prod ? "true" : "false"
     SECURE_HSTS_PRELOAD                               = local.is_prod ? "true" : "false"
     COOKIE_DOMAIN                                     = ".${var.domain_name}"
-    MIGRATE_ON_STARTUP                                = var.environment == "dev" ? 1 : 0
-    SEED_DEMO_ACCOUNTS                                = var.environment == "dev" ? 1 : 0
-    SEED_DEMO_ACCOUNTS_WATCH                          = var.environment == "dev" ? 1 : 0
-    SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS         = 2
+    SEED_DEMO_ACCOUNTS_WATCH                          = var.environment == "dev" ? "1" : "0"
+    SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS         = "2"
     DEFAULT_FROM_EMAIL                                = "noreply@rentdirect.homes"
     EMAIL_BACKEND                                     = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST                                        = "smtpout.secureserver.net"

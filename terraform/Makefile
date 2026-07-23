@@ -2,131 +2,90 @@ SHELL := /bin/bash
 
 TF ?= terraform
 WORKSPACE ?= dev
-AWS_USE_PROFILE ?= 1
 AWS_PROFILE ?= root
 
-THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-TERRAFORM_DIR := $(abspath $(dir $(THIS_MAKEFILE)))
-INFRA_DIR := $(abspath $(TERRAFORM_DIR)/..)
-
-TF_CMD := $(TF) -chdir=$(TERRAFORM_DIR)
-TFVARS_FILE := $(TERRAFORM_DIR)/envs/$(WORKSPACE).tfvars
-WORKSPACE_VARS := -var-file=$(TFVARS_FILE)
-PLAN_FILE := $(TERRAFORM_DIR)/tfplan
-
-AWS_WORKLOAD_PROFILE ?= $(WORKSPACE)-rentdirect
-AWS_SDK_LOAD_CONFIG ?= 1
-AWS_PROFILE_FLAG :=
-BASH_CMD := bash
-ENV_FILE := $(TERRAFORM_DIR)/envs/secrets/.env.$(WORKSPACE)
-ENV_EXAMPLE_FILE := $(ENV_FILE).example
+WORKSPACE_VARS := -var-file=envs/$(WORKSPACE).tfvars
+DECRYPTED_ENV_FILE := envs/secrets/.env.$(WORKSPACE)
 LOCK_FILE := s3://rentdirect-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
+LOAD_ENV := set -a && . "$(DECRYPTED_ENV_FILE)" && set +a
 
-ifeq ($(AWS_USE_PROFILE),0)
-unexport AWS_PROFILE
-unexport AWS_DEFAULT_PROFILE
-LOAD_ENV := set -a && . "$(ENV_FILE)" && set +a && unset AWS_PROFILE AWS_DEFAULT_PROFILE
-else
-AWS_DEFAULT_PROFILE ?= $(AWS_PROFILE)
-AWS_PROFILE_FLAG := --profile $(AWS_PROFILE)
-export AWS_PROFILE
-export AWS_DEFAULT_PROFILE
-LOAD_ENV := set -a && . "$(ENV_FILE)" && set +a
-endif
-
-export WORKSPACE
-export AWS_USE_PROFILE
-export AWS_WORKLOAD_PROFILE
-export AWS_SDK_LOAD_CONFIG
-
-.PHONY: load-env check-tfvars setup encrypt decrypt encrypt-all fmt fmt-check init upgrade reconfig workspace validate lint refresh plan apply apply-plan destroy state-list list console unlock
+.PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan refresh destroy console list unlock
 
 # Secrets
-load-env: decrypt
-	@if [ ! -f "$(ENV_FILE)" ]; then \
-		echo "Missing $(ENV_FILE). Copy $(ENV_EXAMPLE_FILE) first."; \
-		exit 1; \
-	fi
-
-check-tfvars:
-	@if [ ! -f "$(TFVARS_FILE)" ]; then \
-		echo "Missing $(TFVARS_FILE)."; \
-		exit 1; \
-	fi
-
 setup:
-	@$(BASH_CMD) "$(INFRA_DIR)/scripts/secrets/setup.sh"
-
-encrypt:
-	@$(BASH_CMD) "$(INFRA_DIR)/scripts/secrets/encrypt.sh" $(WORKSPACE)
+	@bash ../scripts/secrets/setup.sh
 
 decrypt:
-	@$(BASH_CMD) "$(INFRA_DIR)/scripts/secrets/decrypt.sh" $(WORKSPACE)
+	@bash ../scripts/secrets/decrypt.sh $(WORKSPACE)
+
+encrypt:
+	@bash ../scripts/secrets/encrypt.sh $(WORKSPACE)
 
 encrypt-all:
-	@$(BASH_CMD) "$(INFRA_DIR)/scripts/secrets/encrypt.sh" dev
-	@$(BASH_CMD) "$(INFRA_DIR)/scripts/secrets/encrypt.sh" prod
+	@bash ../scripts/secrets/encrypt.sh dev
+	@bash ../scripts/secrets/encrypt.sh prod
+
+load-env:
+	@if [ ! -f "$(DECRYPTED_ENV_FILE)" ]; then \
+		echo "Error: $(DECRYPTED_ENV_FILE) not found. Run 'make decrypt' or create it from the matching .example file."; \
+		exit 1; \
+	fi
 
 # Terraform
 fmt:
-	@$(TF_CMD) fmt -recursive
+	@$(TF) fmt -recursive
 
-fmt-check:
-	@$(TF_CMD) fmt -diff -check -recursive
+init: fmt
+	@$(TF) init -input=false -upgrade
 
-init: load-env
-	@$(LOAD_ENV) && $(TF_CMD) init -input=false
-
-upgrade: load-env
-	@$(LOAD_ENV) && $(TF_CMD) init -input=false -upgrade
-
-reconfig: load-env
-	@$(LOAD_ENV) && $(TF_CMD) init -input=false -reconfigure
+reconfig: fmt
+	@$(TF) init -input=false -reconfigure
 
 workspace: init
-	@$(LOAD_ENV) && { $(TF_CMD) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF_CMD) workspace new $(WORKSPACE); }
+	@$(TF) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF) workspace new $(WORKSPACE)
 
-validate: init
-	@$(LOAD_ENV) && $(TF_CMD) validate
+validate: load-env workspace
+	@$(TF) fmt -diff -check -recursive
+	@$(LOAD_ENV) && $(TF) validate
 
-lint: workspace fmt-check
-	@$(LOAD_ENV) && $(TF_CMD) validate
+lint: validate
 
-refresh: workspace check-tfvars
-	@$(LOAD_ENV) && $(TF_CMD) refresh $(WORKSPACE_VARS)
+plan: validate
+	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -out=tfplan
 
-plan: lint check-tfvars
-	@$(LOAD_ENV) && $(TF_CMD) plan $(WORKSPACE_VARS) -out=$(PLAN_FILE)
+plan-nolock: validate
+	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -lock=false
 
 apply: plan
-	@$(LOAD_ENV) && $(TF_CMD) apply $(PLAN_FILE)
+	@$(LOAD_ENV) && $(TF) apply tfplan
 
-apply-plan: workspace
-	@if [ ! -f "$(PLAN_FILE)" ]; then \
-		echo "Missing $(PLAN_FILE). Run make plan first."; \
+apply-plan: load-env workspace
+	@if [ ! -f tfplan ]; then \
+		echo "Error: tfplan not found. Run 'make plan' first."; \
 		exit 1; \
 	fi
-	@$(LOAD_ENV) && $(TF_CMD) apply $(PLAN_FILE)
+	@$(LOAD_ENV) && $(TF) apply tfplan
 
-destroy: workspace check-tfvars
-	@$(LOAD_ENV) && $(TF_CMD) destroy $(WORKSPACE_VARS)
+refresh: validate
+	@$(LOAD_ENV) && $(TF) refresh $(WORKSPACE_VARS)
 
-state-list: workspace
-	@$(LOAD_ENV) && $(TF_CMD) state list
+destroy: validate
+	@$(LOAD_ENV) && $(TF) destroy $(WORKSPACE_VARS)
 
-list: state-list
+console: validate
+	@$(LOAD_ENV) && $(TF) console $(WORKSPACE_VARS)
 
-console: workspace check-tfvars
-	@$(LOAD_ENV) && $(TF_CMD) console $(WORKSPACE_VARS)
+list: workspace
+	@$(TF) state list
 
 unlock:
 	@if pgrep -x terraform-ls >/dev/null; then \
 		pkill -x terraform-ls; \
 		sleep 2; \
 	fi
-	@if aws s3 ls $(LOCK_FILE) $(AWS_PROFILE_FLAG) >/dev/null 2>&1; then \
+	@if aws s3 ls $(LOCK_FILE) --profile $(AWS_PROFILE) >/dev/null 2>&1; then \
 		echo "Lock file found, removing..."; \
-		aws s3 rm $(LOCK_FILE) $(AWS_PROFILE_FLAG); \
+		aws s3 rm $(LOCK_FILE) --profile $(AWS_PROFILE); \
 	else \
 		echo "No lock file found"; \
 	fi

@@ -190,4 +190,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform apply
-        run: make apply-plan
+        run: make apply
