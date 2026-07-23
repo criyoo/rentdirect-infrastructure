@@ -3,6 +3,8 @@
 # ================================
 .env.dev
 .env.prod
+# Encrypted environment files should be tracked.
+!.env.*.age
 *.pem
 *.key
 *.cert
