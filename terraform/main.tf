@@ -56,7 +56,7 @@ module "storage" {
   environment            = var.environment
   name_prefix            = local.name_prefix
   common_tags            = local.common_tags
-  api_environment        = local.api_environment
+  api_string_environment = local.api_string_environment
   api_secure_environment = var.api_secure_environment
 }
 
@@ -92,7 +92,7 @@ module "ecs_service" {
   log_retention_in_days     = var.log_retention_in_days
   api                       = var.api
   api_image_uri             = local.api_image_uri
-  api_environment           = local.api_environment
+  api_string_environment    = local.api_string_environment
   api_secrets               = local.api_secrets
   secure_parameter_arns     = local.secure_parameter_arns
   media_bucket_arn          = module.storage.media_bucket_arn

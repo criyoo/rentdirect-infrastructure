@@ -98,7 +98,7 @@ locals {
   # locals {
   api_image_uri = "${module.storage.api_repository_url}:${var.environment}"
 
-  api_environment = {
+  api_string_environment = {
     DJANGO_SETTINGS_MODULE                            = "config.settings"
     DJANGO_ENV                                        = local.is_prod ? "production" : "development"
     DJANGO_DEBUG                                      = "false"

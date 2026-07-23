@@ -49,7 +49,7 @@ variable "api_image_uri" {
   type = string
 }
 
-variable "api_environment" {
+variable "api_string_environment" {
   type = map(string)
 }
 

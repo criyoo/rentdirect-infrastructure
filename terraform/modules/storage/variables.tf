@@ -22,7 +22,7 @@ variable "common_tags" {
   type = map(string)
 }
 
-variable "api_environment" {
+variable "api_string_environment" {
   type = map(string)
 }
 
