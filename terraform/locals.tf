@@ -151,7 +151,15 @@ locals {
     DIKRIPT_NIN_API_URL                               = "/dikript/verification/api/v1/getnin"
     DIKRIPT_BVN_API_URL                               = "/dikript/verification/api/v1/getbvn"
     DIKRIPT_CAC_API_URL                               = "/dikript/verification/api/v1/getcacbasic"
-    DIKRIPT_TIMEOUT_SECONDS                           = "10"
+    DIKRIPT_TIMEOUT_SECONDS                           = "10",
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_ID             = "",
+    RENTDIRECT_SUBSCRIPTION_BUSINESS_EMAIL            = "noreply@rentdirect.homes",
+    RENTDIRECT_SUBSCRIPTION_BUSINESS_MOBILE           = "08099446062",
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_COUNTRY        = "NG",
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_TYPE     = "flat",
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_VALUE    = "0",
+    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE   = "flat",
+    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE        = "0",
   }
   # var.app_string_parameters,
 
