@@ -198,7 +198,7 @@ jobs:
 
 
   delete-dev:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.RUN_DELETE_JOB == 'true'
+    if: vars.RUN_DELETE_JOB == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
