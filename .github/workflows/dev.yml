@@ -5,6 +5,12 @@ on:
     branches:
       - development
   workflow_dispatch:
+    inputs:
+      run_delete_job:
+        description: Set to true to run only delete-dev.
+        required: true # Optional: but forces the input tp be provided in the manual run in the UI
+        default: true # This controls whihc of the jobs run (when true only the delete-dev job runs)
+        type: boolean
 
 env:
   AWS_USE_PROFILE: "0"
@@ -14,8 +20,7 @@ env:
   ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
   DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
   AGE_KEY_FILE: "envs/secrets/.env.dev.key"
-  RUN_OTHER_JOBS: "false"
-  RUN_DELETE_JOB: "true"
+  RUN_DELETE_JOB: "${{ inputs.run_delete_job == true }}"
 
 permissions:
   contents: read
@@ -34,7 +39,7 @@ defaults:
 
 jobs:
   detect-changes:
-    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.RUN_OTHER_JOBS == 'true'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.run_delete_job != true
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
@@ -198,7 +203,7 @@ jobs:
 
 
   delete-dev:
-    if: env.RUN_DELETE_JOB == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && inputs.run_delete_job == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
