@@ -6,6 +6,15 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  AWS_USE_PROFILE: "0"
+  AWS_REGION: "eu-west-1"
+  TERRAFORM_VERSION: "1.15.0"
+  WORKSPACE: "prod"
+  ENCRYPTED_ENV_FILE: "envs/secrets/.env.prod.age"
+  DECRYPTED_ENV_FILE: "envs/secrets/.env.prod"
+  AGE_KEY_FILE: "envs/secrets/.env.prod.key"
+
 permissions:
   contents: read
   id-token: write
@@ -20,17 +29,10 @@ defaults:
     shell: bash
     working-directory: terraform
 
-env:
-  AWS_USE_PROFILE: "0"
-  AWS_REGION: "eu-west-1"
-  TERRAFORM_VERSION: "1.15.0"
-  WORKSPACE: "prod"
-  ENCRYPTED_ENV_FILE: "envs/secrets/.env.prod.age"
-  DECRYPTED_ENV_FILE: "envs/secrets/.env.prod"
-  AGE_KEY_FILE: "envs/secrets/.env.prod.key"
 
 jobs:
   detect-changes:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
@@ -199,4 +201,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform apply
-        run: make apply-plan
+        run: make apply

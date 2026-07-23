@@ -6,6 +6,17 @@ on:
       - development
   workflow_dispatch:
 
+env:
+  AWS_USE_PROFILE: "0"
+  AWS_REGION: "eu-west-1"
+  TERRAFORM_VERSION: "1.15.0"
+  WORKSPACE: "dev"
+  ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
+  DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
+  AGE_KEY_FILE: "envs/secrets/.env.dev.key"
+  RUN_OTHER_JOBS: "false"
+  RUN_DELETE_JOB: "true"
+
 permissions:
   contents: read
   id-token: write
@@ -20,17 +31,10 @@ defaults:
     shell: bash
     working-directory: terraform
 
-env:
-  AWS_USE_PROFILE: "0"
-  AWS_REGION: "eu-west-1"
-  TERRAFORM_VERSION: "1.15.0"
-  WORKSPACE: "dev"
-  ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
-  DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
-  AGE_KEY_FILE: "envs/secrets/.env.dev.key"
 
 jobs:
   detect-changes:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.RUN_OTHER_JOBS == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
@@ -191,3 +195,48 @@ jobs:
 
       - name: Terraform apply
         run: make apply
+
+
+  delete-dev:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.RUN_DELETE_JOB == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: development
+    env:
+      WORKSPACE: dev
+      ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
+      DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
+      AGE_KEY_FILE: "envs/secrets/.env.dev.key"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install age
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y age
+
+      - name: Create age key file
+        run: |
+          printf '%s\n' "${{ secrets.AGE_SECRET_KEY }}" > "${{ env.AGE_KEY_FILE }}"
+          chmod 600 "${{ env.AGE_KEY_FILE }}"
+
+      - name: Decrypt secrets key
+        run: |
+          age --decrypt --identity "${{ env.AGE_KEY_FILE }}" --output "${{ env.DECRYPTED_ENV_FILE }}" "${{ env.ENCRYPTED_ENV_FILE }}"
+          chmod 600 "${{ env.DECRYPTED_ENV_FILE }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROOT_ACCOUNT_GITHUB_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "${{ env.TERRAFORM_VERSION }}"
+
+      - name: Terraform destroy DEV
+        env:
+          TF_CLI_ARGS_destroy: "-auto-approve -input=false"
+        run: make destroy
