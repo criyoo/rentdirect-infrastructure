@@ -28,7 +28,7 @@ resource "aws_ecs_task_definition" "api" {
       hostPort      = var.api.port
       protocol      = "tcp"
     }]
-    environment = [for key, value in var.api_string_environment : {
+    environment = [for key, value in local.container_environment : {
       name  = key
       value = value
     }]
@@ -76,8 +76,8 @@ resource "aws_ecs_task_definition" "payout_worker" {
     name      = "payout-worker"
     image     = var.api_image_uri
     essential = true
-    command   = ["python", "manage.py", "watch_ready_payouts"]
-    environment = [for key, value in var.api_string_environment : {
+    command   = ["python", "manage.py", "payment_queue_worker"]
+    environment = [for key, value in local.container_environment : {
       name  = key
       value = value
     }]
@@ -119,7 +119,7 @@ resource "aws_ecs_task_definition" "migration" {
     image     = var.api_image_uri
     essential = true
     command   = ["sh", "-c", "python manage.py migrate"]
-    environment = [for key, value in var.api_string_environment : {
+    environment = [for key, value in local.container_environment : {
       name  = key
       value = value
     }]

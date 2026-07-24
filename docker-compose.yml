@@ -139,6 +139,10 @@ services:
       SEED_DEMO_ACCOUNTS_ON_STARTUP: "0"
       SEED_DEMO_ACCOUNTS_WATCH: "1"
       SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS: "2"
+      VALKEY_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_BACKEND: rq
+      PAYMENT_QUEUE_NAME: rentdirect-payments
+      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
       CLOUDFLARE_WAIT_ATTEMPTS: "60"
       CLOUDFLARE_TUNNEL_URL_FILE: /data/cloudflared/tunnel-url
@@ -169,7 +173,7 @@ services:
     networks:
       - rentdirect-network
 
-  payout-worker:
+  payment-worker:
     build:
       context: ../apps/api
       target: development
@@ -177,6 +181,10 @@ services:
       - ../apps/api/.env
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
+      VALKEY_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_BACKEND: rq
+      PAYMENT_QUEUE_NAME: rentdirect-payments
+      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
       FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS: "300"
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
     depends_on:
@@ -191,7 +199,39 @@ services:
     volumes:
       - ../apps/api:/app
       - media_files:/app/uploads
-    command: python manage.py watch_ready_payouts
+    command: python manage.py payment_queue_worker
+    restart: unless-stopped
+    networks:
+      - rentdirect-network
+
+  payment-scheduler:
+    build:
+      context: ../apps/api
+      target: development
+    env_file:
+      - ../apps/api/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      VALKEY_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_BACKEND: rq
+      PAYMENT_QUEUE_NAME: rentdirect-payments
+      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_READY_PAYOUT_INTERVAL_SECONDS: "300"
+      PAYMENT_QUEUE_SUBSCRIPTION_RENEWAL_INTERVAL_SECONDS: "3600"
+      FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
+    depends_on:
+      api:
+        condition: service_healthy
+      payment-worker:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    volumes:
+      - ../apps/api:/app
+      - media_files:/app/uploads
+    command: python manage.py watch_payment_queue_schedules
     restart: unless-stopped
     networks:
       - rentdirect-network

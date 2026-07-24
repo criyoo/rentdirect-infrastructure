@@ -54,6 +54,25 @@ variable "worker" {
   })
 }
 
+variable "payment_queue" {
+  type = object({
+    visibility_timeout_seconds               = number
+    message_retention_seconds                = number
+    max_receive_count                        = number
+    receive_wait_time_seconds                = number
+    ready_payout_schedule_expression         = string
+    subscription_renewal_schedule_expression = string
+  })
+  default = {
+    visibility_timeout_seconds               = 300
+    message_retention_seconds                = 1209600
+    max_receive_count                        = 5
+    receive_wait_time_seconds                = 20
+    ready_payout_schedule_expression         = "rate(15 minutes)"
+    subscription_renewal_schedule_expression = "rate(1 hour)"
+  }
+}
+
 variable "api_image_uri" {
   type = string
 }

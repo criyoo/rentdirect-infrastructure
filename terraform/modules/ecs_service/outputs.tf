@@ -12,3 +12,15 @@ output "service_names" {
 output "migration_task_definition_arn" {
   value = aws_ecs_task_definition.migration.arn
 }
+
+output "payment_queue_url" {
+  value = aws_sqs_queue.payment.url
+}
+
+output "payment_queue_arn" {
+  value = aws_sqs_queue.payment.arn
+}
+
+output "payment_queue_dlq_arn" {
+  value = aws_sqs_queue.payment_dlq.arn
+}
