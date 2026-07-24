@@ -9,11 +9,12 @@ on:
       run_delete_job:
         description: Set to true to run only delete-dev.
         required: false
-        default: "true"
+        default: "false"
         type: choice
         options:
           - "true"
           - "false"
+
 
 env:
   AWS_USE_PROFILE: "0"
@@ -23,7 +24,6 @@ env:
   ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
   DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
   AGE_KEY_FILE: "envs/secrets/.env.dev.key"
-  RUN_DELETE_JOB: "true"
 
 permissions:
   contents: read
