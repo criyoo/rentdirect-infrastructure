@@ -200,7 +200,7 @@ jobs:
 
 
   delete-dev:
-    if: inputs.destroy
+    if: inputs.destroy == true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
