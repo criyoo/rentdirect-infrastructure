@@ -40,6 +40,7 @@ jobs:
   determine-action:
     name: Determine Terraform Action
     runs-on: ubuntu-latest
+    environment: development
     outputs:
       destroy: ${{ steps.action.outputs.destroy }}
     steps:
@@ -56,6 +57,7 @@ jobs:
     if: ${{ needs.determine-action.outputs.destroy != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    environment: development
     outputs:
       changes: ${{ steps.filter.outputs.infra }}
     steps:
