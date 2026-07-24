@@ -12,8 +12,9 @@ on:
         type: boolean
         default: false # Do not change
 
+# To control which jobs to run, set the DESTROY_DEV environment variable to "true" or "false"
 env:
-  DESTROY_DEV: "true" # "false" = run other jobs & skip destroy job; and "true" = run only the destroy job & skip all other jobs
+  DESTROY_DEV: "false" # "false" = skip destroy job & "true" = run destroy job.
   AWS_USE_PROFILE: "0"
   AWS_REGION: "eu-west-1"
   TERRAFORM_VERSION: "1.15.0"
@@ -147,7 +148,9 @@ jobs:
           terraform_version: "${{ env.TERRAFORM_VERSION }}"
 
       - name: Terraform validate
-        run: make lint WORKSPACE=${{ vars.WORKSPACE }}
+        run: | 
+          make fmt
+          make lint WORKSPACE=${{ vars.WORKSPACE }}
 
   plan:
     needs:

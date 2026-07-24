@@ -28,74 +28,6 @@ locals {
   # v4 sandbox = https://developersandbox-api.flutterwave.com
   # v4 Live = https://f4bexperience.flutterwave.com
 
-  repository_root = abspath("${path.module}/../..")
-
-  # api_source_directories = [
-  #   "core",
-  #   "config",
-  #   "seed_demo_data",
-  # ]
-  # api_source_files = [
-  #   "Dockerfile",
-  #   "__init__.py",
-  #   "docker-entrypoint.sh",
-  #   "manage.py",
-  #   "requirements.txt",
-  # ]
-  # api_application_files = concat(
-  #   flatten([
-  #     for directory in local.api_source_directories : [
-  #       for file in sort(tolist(toset(fileset("${local.repository_root}/apps/api/${directory}", "**")))) : {
-  #         path = "apps/api/${directory}/${file}"
-  #         hash = filesha1("${local.repository_root}/apps/api/${directory}/${file}")
-  #       }
-  #     ]
-  #   ]),
-  #   [
-  #     for file in local.api_source_files : {
-  #       path = "apps/api/${file}"
-  #       hash = filesha1("${local.repository_root}/apps/api/${file}")
-  #     }
-  #   ],
-  # )
-  # api_application_hash = sha1(jsonencode(local.api_application_files))
-
-  #   web_source_directories = [
-  #     "apps/web/public",
-  #     "apps/web/src",
-  #   ]
-  #   web_source_files = [
-  #     "apps/web/eslint.config.js",
-  #     "apps/web/index.html",
-  #     "apps/web/package.json",
-  #     "apps/web/package-lock.json",
-  #     "apps/web/postcss.config.js",
-  #     "apps/web/tailwind.config.ts",
-  #     "apps/web/tsconfig.json",
-  #     "apps/web/tsconfig.node.json",
-  #     "apps/web/vite.config.ts",
-  #     "package.json",
-  #   ]
-  #   web_application_files = concat(
-  #     flatten([
-  #       for directory in local.web_source_directories : [
-  #         for file in sort(tolist(toset(fileset("${local.repository_root}/${directory}", "**")))) : {
-  #           path = "${directory}/${file}"
-  #           hash = filesha1("${local.repository_root}/${directory}/${file}")
-  #         }
-  #       ]
-  #     ]),
-  #     [
-  #       for file in local.web_source_files : {
-  #         path = file
-  #         hash = filesha1("${local.repository_root}/${file}")
-  #       }
-  #     ],
-  #   )
-  #   web_application_hash = sha1(jsonencode(local.web_application_files))
-  # }
-
-  # locals {
   api_image_uri = "${module.storage.api_repository_url}:${var.environment}"
 
   api_string_environment = {
@@ -161,7 +93,6 @@ locals {
     RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE   = "flat",
     RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE        = "0",
   }
-  # var.app_string_parameters,
 
   api_secrets = merge(
     module.storage.app_secure_parameter_arns,
