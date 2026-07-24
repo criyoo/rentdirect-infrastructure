@@ -43,6 +43,7 @@ jobs:
     outputs:
       destroy: ${{ steps.action.outputs.destroy }}
     steps:
+      - uses: actions/checkout@v4
       - name: Determine requested action
         id: action
         run: echo "destroy=${{ vars.DESTROY == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.destroy) || (github.event_name == 'push' && env.DESTROY_DEV == 'true')) }}" >> "$GITHUB_OUTPUT"
