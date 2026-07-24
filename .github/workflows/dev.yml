@@ -24,6 +24,7 @@ env:
   ENCRYPTED_ENV_FILE: "envs/secrets/.env.dev.age"
   DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
   AGE_KEY_FILE: "envs/secrets/.env.dev.key"
+  RUN_DELETE_JOB: "false"
 
 permissions:
   contents: read
@@ -42,7 +43,6 @@ defaults:
 
 jobs:
   detect-changes:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_delete_job != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
@@ -206,7 +206,6 @@ jobs:
 
 
   delete-dev:
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_delete_job == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
@@ -216,35 +215,43 @@ jobs:
       DECRYPTED_ENV_FILE: "envs/secrets/.env.dev"
       AGE_KEY_FILE: "envs/secrets/.env.dev.key"
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
+        uses: actions/checkout@v4
 
       - name: Install age
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y age
 
       - name: Create age key file
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         run: |
           printf '%s\n' "${{ secrets.AGE_SECRET_KEY }}" > "${{ env.AGE_KEY_FILE }}"
           chmod 600 "${{ env.AGE_KEY_FILE }}"
 
       - name: Decrypt secrets key
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         run: |
           age --decrypt --identity "${{ env.AGE_KEY_FILE }}" --output "${{ env.DECRYPTED_ENV_FILE }}" "${{ env.ENCRYPTED_ENV_FILE }}"
           chmod 600 "${{ env.DECRYPTED_ENV_FILE }}"
 
       - name: Configure AWS credentials
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROOT_ACCOUNT_GITHUB_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install Terraform
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "${{ env.TERRAFORM_VERSION }}"
 
       - name: Terraform destroy DEV
+        if: ${{ env.RUN_DELETE_JOB == 'true' }}
         env:
           TF_CLI_ARGS_destroy: "-auto-approve -input=false"
         run: make destroy
