@@ -16,7 +16,7 @@ resource "aws_ecs_service" "api" {
   load_balancer {
     target_group_arn = var.api_target_group_arn
     container_name   = "api"
-    container_port   = 8000
+    container_port   = var.api.port
   }
 
   deployment_circuit_breaker {
@@ -31,7 +31,7 @@ resource "aws_ecs_service" "payout_worker" {
   name            = "${var.name_prefix}-payout-worker"
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.payout_worker.arn
-  desired_count   = 1
+  desired_count   = var.worker.desired_count
   launch_type     = "FARGATE"
 
   network_configuration {

@@ -91,6 +91,7 @@ module "ecs_service" {
   enable_container_insights = var.enable_container_insights
   log_retention_in_days     = var.log_retention_in_days
   api                       = var.api
+  worker                    = var.worker
   api_image_uri             = local.api_image_uri
   api_string_environment    = local.api_string_environment
   api_secrets               = local.api_secrets

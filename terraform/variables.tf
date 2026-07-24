@@ -96,10 +96,20 @@ variable "api" {
   type = object({
     cpu           = number
     memory        = number
+    port          = number
     desired_count = number
     min_count     = number
     max_count     = number
     cpu_target    = number
+  })
+}
+
+variable "worker" {
+  description = "Backend ECS service for the payout worker."
+  type = object({
+    cpu           = number
+    memory        = number
+    desired_count = number
   })
 }
 

@@ -28,12 +28,19 @@ django_allowed_hosts = [
 ]
 
 api = {
-  cpu           = 512
-  memory        = 1024
+  cpu           = 1024
+  memory        = 2048
   desired_count = 1
   min_count     = 2
   max_count     = 4
   cpu_target    = 70
+}
+
+# Used for payput worker and migration ecs tasks
+worker = {
+  cpu           = 256
+  memory        = 512
+  desired_count = 1
 }
 
 database = {

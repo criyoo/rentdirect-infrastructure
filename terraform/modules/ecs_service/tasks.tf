@@ -24,8 +24,8 @@ resource "aws_ecs_task_definition" "api" {
     image     = var.api_image_uri
     essential = true
     portMappings = [{
-      containerPort = 8000
-      hostPort      = 8000
+      containerPort = var.api.port
+      hostPort      = var.api.port
       protocol      = "tcp"
     }]
     environment = [for key, value in var.api_string_environment : {
@@ -62,8 +62,8 @@ resource "aws_ecs_task_definition" "payout_worker" {
   family                   = "${var.name_prefix}-payout-worker"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = tostring(var.api.cpu)
-  memory                   = tostring(var.api.memory)
+  cpu                      = tostring(var.worker.cpu)
+  memory                   = tostring(var.worker.memory)
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
 
@@ -104,8 +104,8 @@ resource "aws_ecs_task_definition" "migration" {
   family                   = "${var.name_prefix}-migration"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = tostring(var.api.cpu)
-  memory                   = tostring(var.api.memory)
+  cpu                      = tostring(var.worker.cpu)
+  memory                   = tostring(var.worker.memory)
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
 
