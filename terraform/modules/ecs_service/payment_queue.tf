@@ -99,14 +99,6 @@ resource "aws_iam_role" "payment_scheduler" {
         Service = "scheduler.amazonaws.com"
       }
       Action = "sts:AssumeRole"
-      Condition = {
-        StringEquals = {
-          "aws:SourceAccount" = data.aws_caller_identity.current.account_id
-        }
-        ArnLike = {
-          "aws:SourceArn" = "arn:aws:scheduler:${var.aws_region}:${data.aws_caller_identity.current.account_id}:schedule/${aws_scheduler_schedule_group.payment.name}/*"
-        }
-      }
     }]
   })
 
