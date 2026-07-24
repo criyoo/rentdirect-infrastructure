@@ -10,10 +10,10 @@ on:
         description: Destroy infrastructure
         required: true
         type: boolean
-        default: false
+        default: false # Do not change
 
 env:
-  DESTROY_DEV: "false" # "false" = run other jobs & skip destroy job; and "true" = run only the destroy job & skip all other jobs
+  DESTROY_DEV: "true" # "false" = run other jobs & skip destroy job; and "true" = run only the destroy job & skip all other jobs
   AWS_USE_PROFILE: "0"
   AWS_REGION: "eu-west-1"
   TERRAFORM_VERSION: "1.15.0"
@@ -43,7 +43,9 @@ jobs:
     outputs:
       destroy: ${{ steps.action.outputs.destroy }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Determine requested action
         id: action
         run: echo "destroy=${{ vars.DESTROY == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.destroy) || (github.event_name == 'push' && env.DESTROY_DEV == 'true')) }}" >> "$GITHUB_OUTPUT"
@@ -57,9 +59,11 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.infra }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: dorny/paths-filter@v3
+      - name: Check for file Changes
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -78,7 +82,8 @@ jobs:
     timeout-minutes: 2
     environment: development
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Install age
         run: |
@@ -119,7 +124,8 @@ jobs:
     timeout-minutes: 3
     environment: development
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Download decrypted secrets
         uses: actions/download-artifact@v4
