@@ -14,7 +14,7 @@ on:
 
 # To control which jobs to run, set the DESTROY_DEV environment variable to "true" or "false"
 env:
-  DESTROY_DEV: "false" # "false" = skip destroy job & "true" = run destroy job.
+  DESTROY_DEV: "true" # "false" = skip destroy job & "true" = run destroy job.
   AWS_USE_PROFILE: "0"
   AWS_REGION: "eu-west-1"
   TERRAFORM_VERSION: "1.15.0"
