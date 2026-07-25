@@ -147,6 +147,7 @@ services:
       CLOUDFLARE_WAIT_ATTEMPTS: "60"
       CLOUDFLARE_TUNNEL_URL_FILE: /data/cloudflared/tunnel-url
       FLUTTERWAVE_WEBHOOK_PATH: /api/v1/payments/webhook/flutterwave # update base url on restart
+      VERIFICATION_SERVICE: prembly
     depends_on:
       api-seed-data:
         condition: service_completed_successfully

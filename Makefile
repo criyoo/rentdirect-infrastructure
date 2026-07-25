@@ -56,6 +56,9 @@ admin:
 		-e DJANGO_SUPERUSER_NAME=Admin \
 		api python3 manage.py ensure_superuser
 
+tunnel:
+	$(COMPOSE) exec cloudflared cat /data/cloudflared/tunnel-url
+
 prune:
 	@docker system df
 	@docker system prune -f
