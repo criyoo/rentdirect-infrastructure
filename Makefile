@@ -6,14 +6,14 @@ WORKSPACE ?= dev
 INFRA_MAKE := $(MAKE) -C terraform WORKSPACE=$(WORKSPACE) AWS_PROFILE=$(AWS_PROFILE)
 COMPOSE := docker compose -f docker-compose.yml
 
-.PHONY: setup decrypt encrypt encrypt-all fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan refresh destroy console list unlock down build up migrate seed shell test admin prune
+.PHONY: setup decrypt encrypt encrypt-all fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan show-egress-ip refresh destroy console list unlock down build up migrate seed shell test admin prune
 
 # Secrets
 setup decrypt encrypt encrypt-all:
 	@$(INFRA_MAKE) $@
 
 # Terraform
-fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan refresh destroy console list unlock:
+fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan show-ip refresh destroy console list unlock:
 	@$(INFRA_MAKE) $@
 
 # Docker
@@ -55,7 +55,7 @@ admin:
 		-e DJANGO_SUPERUSER_PASSWORD=ifG0dbi4mi \
 		-e DJANGO_SUPERUSER_NAME=Admin \
 		api python3 manage.py ensure_superuser
-
+		
 tunnel:
 	$(COMPOSE) exec cloudflared cat /data/cloudflared/tunnel-url
 

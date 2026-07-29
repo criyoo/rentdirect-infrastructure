@@ -13,7 +13,7 @@ This document estimates monthly infrastructure and operational cost for the curr
 - `infra/terraform/modules/databases/*`
 - `infra/terraform/modules/storage/*`
 - `infra/terraform/modules/ecs_service/*`
-- `apps/api/config/settings.py`
+- `apps/api/config/settings/`
 - `apps/api/core/views.py`
 - `apps/api/core/models.py`
 - `apps/web`

@@ -899,7 +899,7 @@ These gaps affect all six dimensions:
 
 | Area | Path |
 |------|------|
-| Django settings | `apps/api/config/settings.py` |
+| Django settings | `apps/api/config/settings/` |
 | Auth | `apps/api/core/authentication.py` |
 | Health check | `apps/api/core/middleware.py` |
 | Payment queue logic | `apps/api/core/payment_queue.py` |

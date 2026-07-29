@@ -32,7 +32,7 @@ locals {
   api_image_uri = "${module.storage.api_repository_url}:${var.environment}"
 
   api_string_environment = {
-    DJANGO_SETTINGS_MODULE                    = "config.settings"
+    DJANGO_SETTINGS_MODULE                    = local.is_prod ? "config.settings.production" : "config.settings.development"
     DJANGO_ENV                                = local.is_prod ? "production" : "development"
     DJANGO_DEBUG                              = "false"
     DJANGO_ALLOWED_HOSTS                      = local.api_allowed_hosts
@@ -75,12 +75,15 @@ locals {
     EMAIL_USE_SSL                             = "false"
     EMAIL_TIMEOUT                             = "60"
     SERVER_EMAIL                              = "info@rentdirect.homes"
+
     # Flutterwaves
-    FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "900"
     FLUTTERWAVE_API_VERSION                           = "4"
     FLUTTERWAVE_API_BASE_URL                          = local.flutterwave_api_base_url
     FLUTTERWAVE_TOKEN_URL                             = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
     FLUTTERWAVE_WEBHOOK_URL                           = "${local.api_origin}/api/v1/payments/webhook/flutterwave"
+    FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 10 # Minutes
+    FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "300"
+
     # Verification
     VERIFICATION_SERVICE = local.verification_service
     # Dikript
@@ -98,19 +101,42 @@ locals {
     PREMBLY_LOOKUP_CACHE_TIMEOUT_SECONDS = "86400"
     PREMBLY_WEBHOOK_TOKEN_CACHE_SECONDS  = "604800"
     PREMBLY_CAC_COMPANY_TYPE             = "RC"
-    # Rentdirect
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_ID           = "",
-    RENTDIRECT_SUBSCRIPTION_BUSINESS_EMAIL          = "noreply@rentdirect.homes",
-    RENTDIRECT_SUBSCRIPTION_BUSINESS_MOBILE         = "08099446062",
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_COUNTRY      = "NG",
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_TYPE   = "flat",
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_VALUE  = "0",
-    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE = "flat",
-    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE      = "0",
+
+    # Rentdirect Operational Account
+    RENTDIRECT_OPERATING_BANK_CODE      = "50515"
+    RENTDIRECT_OPERATING_BANK_NAME      = "Moniepoint"
+    RENTDIRECT_OPERATING_ACCOUNT_NUMBER = "8099446062"
+    RENTDIRECT_OPERATING_ACCOUNT_NAME   = "Christian Odezi Aluya"
+
+    # Tenants Caution Fee holding accounts
+    TENANT_CAUTION_HOLDING_BANK_CODE      = "100033"
+    TENANT_CAUTION_HOLDING_BANK_NAME      = "PalmPay"
+    TENANT_CAUTION_HOLDING_ACCOUNT_NUMBER = "9041487757"
+    TENANT_CAUTION_HOLDING_ACCOUNT_NAME   = "Christian Odezi Aluya"
+
+    # Rentdirect Subscription account
+    RENTDIRECT_SUBSCRIPTION_BANK_CODE               = "214"
+    RENTDIRECT_SUBSCRIPTION_BANK_NAME               = "FCMB"
+    RENTDIRECT_SUBSCRIPTION_ACCOUNT_NUMBER          = "2870390028"
+    RENTDIRECT_SUBSCRIPTION_ACCOUNT_NAME            = "Aluya Christian Odezi"
+    RENTDIRECT_SUBSCRIPTION_BUSINESS_EMAIL          = "noreply@rentdirect.homes"
+    RENTDIRECT_SUBSCRIPTION_BUSINESS_MOBILE         = "08099446062"
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_COUNTRY      = "NG"
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_TYPE   = "flat"
+    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_VALUE  = "0"
+    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE = "flat"
+    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE      = "0"
+
+  }
+
+  api_secure_parameter_arns = {
+    for key, arn in module.storage.app_secure_parameter_arns :
+    key => arn
+    if !contains(keys(local.api_string_environment), key)
   }
 
   api_secrets = merge(
-    module.storage.app_secure_parameter_arns,
+    local.api_secure_parameter_arns,
     module.databases.valkey_auth_parameter_arn != null ? {
       VALKEY_AUTH_TOKEN = module.databases.valkey_auth_parameter_arn
     } : {}

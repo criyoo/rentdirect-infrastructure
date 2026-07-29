@@ -98,6 +98,7 @@ module "ecs_service" {
   secure_parameter_arns     = local.secure_parameter_arns
   media_bucket_arn          = module.storage.media_bucket_arn
   public_subnet_ids         = module.networking.public_subnet_ids
+  private_subnet_ids        = module.networking.private_subnet_ids
   app_security_group_id     = module.networking.app_security_group_id
   api_target_group_arn      = module.networking.api_target_group_arn
 }

@@ -8,9 +8,9 @@ resource "aws_ecs_service" "api" {
   health_check_grace_period_seconds = 180
 
   network_configuration {
-    subnets          = var.public_subnet_ids
+    subnets          = var.private_subnet_ids
     security_groups  = [var.app_security_group_id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -35,9 +35,9 @@ resource "aws_ecs_service" "payout_worker" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.public_subnet_ids
+    subnets          = var.private_subnet_ids
     security_groups  = [var.app_security_group_id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   deployment_circuit_breaker {

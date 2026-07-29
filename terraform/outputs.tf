@@ -43,6 +43,11 @@ output "payment_queue_dlq_arn" {
   value       = module.ecs_service.payment_queue_dlq_arn
 }
 
+output "static_egress_ip" {
+  description = "Static outbound IP for ECS tasks; whitelist this IP with Flutterwave."
+  value       = module.networking.static_egress_ip
+}
+
 # output "region" {
 #   description = "Primary AWS region."
 #   value       = var.region

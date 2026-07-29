@@ -93,6 +93,13 @@ resource "aws_ecs_task_definition" "payout_worker" {
         awslogs-stream-prefix = "ecs"
       }
     }
+    healthCheck = {
+      command     = ["CMD-SHELL", "python -c \"import os; os.kill(1, 0)\""]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
   }])
 
   tags = var.common_tags

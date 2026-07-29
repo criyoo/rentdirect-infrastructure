@@ -9,7 +9,7 @@ DECRYPTED_ENV_FILE := envs/secrets/.env.$(WORKSPACE)
 LOCK_FILE := s3://rentdirect-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
 LOAD_ENV := set -a && . "$(DECRYPTED_ENV_FILE)" && set +a
 
-.PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan refresh destroy console list unlock
+.PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan show-egress-ip refresh destroy console list unlock
 
 # Secrets
 setup:
@@ -58,6 +58,7 @@ plan-nolock: validate
 
 apply: plan
 	@$(LOAD_ENV) && $(TF) apply tfplan
+	@$(MAKE) show-egress-ip
 
 apply-plan: load-env workspace
 	@if [ ! -f tfplan ]; then \
@@ -65,6 +66,13 @@ apply-plan: load-env workspace
 		exit 1; \
 	fi
 	@$(LOAD_ENV) && $(TF) apply tfplan
+	@$(MAKE) show-egress-ip
+
+show-ip:
+	@egress_ip="$$( $(TF) output -raw static_egress_ip 2>/dev/null || true )"; \
+	if [ -n "$$egress_ip" ]; then \
+		echo "static_egress_ip = $$egress_ip"; \
+	fi
 
 refresh: validate
 	@$(LOAD_ENV) && $(TF) refresh $(WORKSPACE_VARS)

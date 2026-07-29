@@ -22,6 +22,10 @@ output "private_subnet_ids" {
   value = [for subnet in aws_subnet.private : subnet.id]
 }
 
+output "static_egress_ip" {
+  value = aws_eip.egress.public_ip
+}
+
 output "api_target_group_arn" {
   value      = aws_lb_target_group.api.arn
   depends_on = [aws_lb_listener.http, aws_lb_listener.https]

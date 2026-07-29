@@ -105,7 +105,7 @@ services:
     env_file:
       - ../apps/api/.env.local
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.local
       SEED_DEMO_ACCOUNTS: "1"
       COLLECTSTATIC_ON_STARTUP: "1"
       DJANGO_SUPERUSER_EMAIL: "admin@rentdirect.local"
@@ -136,7 +136,7 @@ services:
     env_file:
       - ../apps/api/.env
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.local
       MIGRATE_ON_STARTUP: "0"
       SEED_DEMO_ACCOUNTS: "1"
       SEED_DEMO_ACCOUNTS_ON_STARTUP: "0"
@@ -184,12 +184,13 @@ services:
     env_file:
       - ../apps/api/.env
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.local
       VALKEY_URL: redis://valkey:6379/0
       PAYMENT_QUEUE_BACKEND: rq
       PAYMENT_QUEUE_NAME: rentdirect-payments
       PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
       FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS: "300"
+      FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES: "10"
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
     depends_on:
       api:
@@ -215,7 +216,7 @@ services:
     env_file:
       - ../apps/api/.env
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_SETTINGS_MODULE: config.settings.local
       VALKEY_URL: redis://valkey:6379/0
       PAYMENT_QUEUE_BACKEND: rq
       PAYMENT_QUEUE_NAME: rentdirect-payments

@@ -97,6 +97,10 @@ variable "public_subnet_ids" {
   type = list(string)
 }
 
+variable "private_subnet_ids" {
+  type = list(string)
+}
+
 variable "app_security_group_id" {
   type = string
 }
