@@ -19,9 +19,5 @@ terraform {
     encrypt              = true
     use_lockfile         = true
     workspace_key_prefix = "envs"
-
-    # assume_role = {
-    #   role_arn = "arn:aws:iam::656111643297:role/Github"
-    # }
   }
 }

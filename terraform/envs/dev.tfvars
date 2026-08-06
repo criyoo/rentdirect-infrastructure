@@ -25,7 +25,7 @@ log_retention_in_days           = 1
 monitoring_alarm_email          = "noreply@rentdirect.homes"
 
 django_allowed_hosts = [
-  "api.development.rentdirect.homes",
+  "api.development.rentdirect.homes,development.rentdirect.homes",
 ]
 
 api = {

@@ -14,9 +14,10 @@ locals {
   availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
   route53_zone_id    = data.aws_route53_zone.main.zone_id # aws_route53_zone.main.zone_id # data.aws_route53_zone.main.zone_id
 
-  frontend_origin      = "https://${var.domain_name}"
-  api_origin           = trimspace(var.api_domain_name) != "" ? "https://${var.api_domain_name}" : local.frontend_origin
-  websocket_origin     = trimspace(var.api_domain_name) != "" ? "wss://${var.api_domain_name}" : "wss://${var.domain_name}"
+  frontend_origin  = "https://${var.domain_name}"
+  api_origin       = trimspace(var.api_domain_name) != "" ? "https://${var.api_domain_name}" : local.frontend_origin
+  websocket_origin = trimspace(var.api_domain_name) != "" ? "wss://${var.api_domain_name}" : "wss://${var.domain_name}"
+
   verification_service = var.environment == "dev" ? "prembly" : "prembly" #"dikript"
 
   api_allowed_hosts = join(
@@ -86,12 +87,14 @@ locals {
 
     # Verification
     VERIFICATION_SERVICE = local.verification_service
+
     # Dikript
     DIKRIPT_API_BASE_URL    = "https://api.dikript.com"
     DIKRIPT_NIN_API_URL     = "/dikript/verification/api/v1/getnin"
     DIKRIPT_BVN_API_URL     = "/dikript/verification/api/v1/getbvn"
     DIKRIPT_CAC_API_URL     = "/dikript/verification/api/v1/getcacbasic"
-    DIKRIPT_TIMEOUT_SECONDS = "10",
+    DIKRIPT_TIMEOUT_SECONDS = "10"
+
     # Prembly
     PREMBLY_API_BASE_URL                 = "https://api.prembly.com"
     PREMBLY_NIN_API_URL                  = "/verification/vnin"
@@ -126,7 +129,6 @@ locals {
     RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_VALUE  = "0"
     RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE = "flat"
     RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE      = "0"
-
   }
 
   api_secure_parameter_arns = {

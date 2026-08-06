@@ -183,12 +183,6 @@ variable "alb_health_check_interval" {
   default     = 30
 }
 
-# variable "app_string_parameters" {
-#   description = "Non-sensitive application settings written to SSM."
-#   type        = map(string)
-#   default     = {}
-# }
-
 variable "api_secure_environment" {
   description = "Sensitive application settings written to SSM SecureString."
   type        = map(string)
@@ -211,7 +205,6 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
 
 variable "manage_root_email_dns" {
   description = "Whether this workspace should manage the shared Route 53 records for Hostinger Email."

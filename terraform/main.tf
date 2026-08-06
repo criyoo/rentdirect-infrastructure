@@ -18,6 +18,7 @@ module "security" {
   cloudfront_distribution = module.networking.cloudfront_distribution
 }
 
+
 module "networking" {
   source = "./modules/networking"
 
@@ -49,6 +50,7 @@ module "networking" {
   enable_waf                           = var.enable_waf
 }
 
+
 module "storage" {
   source = "./modules/storage"
 
@@ -78,10 +80,9 @@ module "databases" {
   valkey_security_group_id        = module.networking.valkey_security_group_id
 }
 
+
 module "ecs_service" {
   source = "./modules/ecs_service"
-
-  # depends_on = [terraform_data.backend_image_bootstrap]
 
   name_prefix               = local.name_prefix
   environment               = var.environment
@@ -102,6 +103,7 @@ module "ecs_service" {
   app_security_group_id     = module.networking.app_security_group_id
   api_target_group_arn      = module.networking.api_target_group_arn
 }
+
 
 module "monitoring" {
   source = "./modules/monitoring"
