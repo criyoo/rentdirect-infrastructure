@@ -18,11 +18,10 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - rentdirect_postgres_data:/var/lib/postgresql
     ports:
       - "5600:5432"
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
   valkey:
     image: valkey/valkey:9.1.0-alpine
@@ -39,9 +38,8 @@ services:
     ports:
       - "6600:6379"
     volumes:
-      - valkey_data:/data
-    networks:
-      - rentdirect-network
+      - rentdirect_valkey_data:/data
+    networks: [ rentdirect-network ]
 
   minio:
     image: quay.io/minio/minio:latest
@@ -53,9 +51,8 @@ services:
       - "9600:9000"
       - "9601:9001"
     volumes:
-      - minio_data:/data
-    networks:
-      - rentdirect-network
+      - rentdirect_minio_data:/data
+    networks: [ rentdirect-network ]
 
   minio-create-bucket:
     image: quay.io/minio/mc:latest
@@ -74,8 +71,7 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
   cloudflared:
     build:
@@ -93,9 +89,8 @@ services:
       start_period: 5s
     restart: unless-stopped
     volumes:
-      - cloudflared_data:/data
-    networks:
-      - rentdirect-network
+      - rentdirect_cloudflared_data:/data
+    networks: [ rentdirect-network ]
 
   migrate:
     build:
@@ -108,7 +103,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.local
       SEED_DEMO_ACCOUNTS: "1"
       COLLECTSTATIC_ON_STARTUP: "1"
-      DJANGO_SUPERUSER_EMAIL: "admin@rentdirect.local"
+      DJANGO_SUPERUSER_EMAIL: "admin@rentdirect.homes"
       DJANGO_SUPERUSER_PASSWORD: "ifG0dbi4mi"
       DJANGO_SUPERUSER_NAME: "Admin"
     depends_on:
@@ -124,9 +119,8 @@ services:
       - python manage.py migrate --noinput && python manage.py ensure_superuser && python manage.py seed_demo_data
     volumes:
       - ../apps/api:/app
-      - media_files:/app/uploads
-    networks:
-      - rentdirect-network
+      - rentdirect_media_files:/app/uploads
+    networks: [ rentdirect-network ]
 
   api:
     build:
@@ -134,7 +128,7 @@ services:
       dockerfile: Dockerfile
       target: cloudflare
     env_file:
-      - ../apps/api/.env
+      - ../apps/api/.env.local
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.local
       MIGRATE_ON_STARTUP: "0"
@@ -170,12 +164,11 @@ services:
       start_period: 20s
     volumes:
       - ../apps/api:/app
-      - cloudflared_data:/data:ro
-      - media_files:/app/uploads
+      - rentdirect_cloudflared_data:/data:ro
+      - rentdirect_media_files:/app/uploads
     ports:
       - "8600:8000"
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
   payment-worker:
     build:
@@ -203,11 +196,10 @@ services:
         condition: service_completed_successfully
     volumes:
       - ../apps/api:/app
-      - media_files:/app/uploads
+      - rentdirect_media_files:/app/uploads
     command: python manage.py payment_queue_worker
     restart: unless-stopped
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
   payment-scheduler:
     build:
@@ -235,11 +227,10 @@ services:
         condition: service_healthy
     volumes:
       - ../apps/api:/app
-      - media_files:/app/uploads
+      - rentdirect_media_files:/app/uploads
     command: python manage.py watch_payment_queue_schedules
     restart: unless-stopped
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
   web:
     build:
@@ -263,15 +254,14 @@ services:
     command: npm run dev
     ports:
       - "3600:3600"
-    networks:
-      - rentdirect-network
+    networks: [ rentdirect-network ]
 
 volumes:
-  postgres_data:
-  valkey_data:
-  minio_data:
-  media_files:
-  cloudflared_data:
+  rentdirect_postgres_data:
+  rentdirect_valkey_data:
+  rentdirect_minio_data:
+  rentdirect_media_files:
+  rentdirect_cloudflared_data:
 
 networks:
   rentdirect-network:

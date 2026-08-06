@@ -2,21 +2,28 @@ SHELL := /bin/bash
 
 TF ?= terraform
 WORKSPACE ?= dev
-AWS_PROFILE ?= root
+AWS_PROFILE ?= rentdirect
 
 WORKSPACE_VARS := -var-file=envs/$(WORKSPACE).tfvars
 DECRYPTED_ENV_FILE := envs/secrets/.env.$(WORKSPACE)
-LOCK_FILE := s3://rentdirect-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
+LOCK_FILE := s3://rentdirect-terraform-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
 LOAD_ENV := set -a && . "$(DECRYPTED_ENV_FILE)" && set +a
 
 .PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan show-egress-ip refresh destroy console list unlock
 
-# Secrets
-setup:
-	@bash ../scripts/secrets/setup.sh
 
+# Secrets
 decrypt:
 	@bash ../scripts/secrets/decrypt.sh $(WORKSPACE)
+
+load-env: decrypt
+	@if [ ! -f "$(DECRYPTED_ENV_FILE)" ]; then \
+		echo "Error: $(DECRYPTED_ENV_FILE) not found. Run 'make decrypt' or create it from the matching .example file."; \
+		exit 1; \
+	fi
+
+setup:
+	@bash ../scripts/secrets/setup.sh
 
 encrypt:
 	@bash ../scripts/secrets/encrypt.sh $(WORKSPACE)
@@ -25,12 +32,6 @@ encrypt-all:
 	@bash ../scripts/secrets/encrypt.sh dev
 	@bash ../scripts/secrets/encrypt.sh prod
 
-load-env:
-	@if [ ! -f "$(DECRYPTED_ENV_FILE)" ]; then \
-		echo "Error: $(DECRYPTED_ENV_FILE) not found. Run 'make decrypt' or create it from the matching .example file."; \
-		exit 1; \
-	fi
-
 # Terraform
 fmt:
 	@$(TF) fmt -recursive
@@ -38,33 +39,26 @@ fmt:
 init: fmt
 	@$(TF) init -input=false -upgrade
 
+migrate-state: fmt
+	@$(TF) init -migrate-state
+	
 reconfig: fmt
 	@$(TF) init -input=false -reconfigure
 
 workspace: init
 	@$(TF) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF) workspace new $(WORKSPACE)
 
-validate: load-env workspace
+lint: load-env workspace
 	@$(TF) fmt -diff -check -recursive
 	@$(LOAD_ENV) && $(TF) validate
-
-lint: validate
-
-plan: validate
-	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -out=tfplan
 
 plan-nolock: validate
 	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -lock=false
 
-apply: plan
-	@$(LOAD_ENV) && $(TF) apply tfplan
-	@$(MAKE) show-egress-ip
+plan: lint
+	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -out=tfplan
 
-apply-plan: load-env workspace
-	@if [ ! -f tfplan ]; then \
-		echo "Error: tfplan not found. Run 'make plan' first."; \
-		exit 1; \
-	fi
+apply: plan
 	@$(LOAD_ENV) && $(TF) apply tfplan
 	@$(MAKE) show-egress-ip
 

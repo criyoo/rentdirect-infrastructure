@@ -216,30 +216,45 @@ variable "tags" {
 variable "manage_root_email_dns" {
   description = "Whether this workspace should manage the shared Route 53 records for Hostinger Email."
   type        = bool
-  default     = true
 }
 
-variable "hostinger_email_dns" {
+variable "godaddy_email_dns" {
   description = "Hostinger Email DNS records for the root domain."
   type = object({
-    ttl          = number
+    mx_ttl       = number
+    spf_ttl      = number
+    dmarc_ttl    = number
+    dkim_ttl     = number
+    srv_ttl      = number
     mx_records   = list(object({ priority = number, value = string }))
-    spf_record   = string
+    spf_record   = list(string)
     dmarc_record = string
+    srv_record   = map(string)
     dkim_records = map(string)
   })
+
   default = {
-    ttl = 14400
+    mx_ttl    = 14400
+    spf_ttl   = 3600
+    dmarc_ttl = 3600
+    dkim_ttl  = 300
+    srv_ttl   = 3600
     mx_records = [
-      { priority = 5, value = "mx1.hostinger.com" },
-      { priority = 10, value = "mx2.hostinger.com" },
+      { priority = 0, value = "smtp.secureserver.net" },
+      { priority = 10, value = "mailstore1.secureserver.net" },
     ]
-    spf_record   = "v=spf1 include:_spf.mail.hostinger.com ~all"
-    dmarc_record = "v=DMARC1; p=none"
+    spf_record = [
+      "v=spf1 include:secureserver.net -all",
+      "T1242627"
+    ]
+    dmarc_record = "v=DMARC1; p=reject; rua=mailto:dmarc_rua@onsecureserver.net; adkim=r; aspf=r;"
+    srv_record = {
+      "_autodiscover._tcp" = "100 1 443 autodiscover.secureserver.net"
+    }
     dkim_records = {
-      "hostingermail-a._domainkey" = "hostingermail-a.dkim.mail.hostinger.com"
-      "hostingermail-b._domainkey" = "hostingermail-b.dkim.mail.hostinger.com"
-      "hostingermail-c._domainkey" = "hostingermail-c.dkim.mail.hostinger.com"
+      "email"                    = "email.secureserver.net"
+      "secureserver1._domainkey" = "s1.dkim.rentdirect_homes.749.onsecureserver.net."
+      "secureserver2._domainkey" = "s2.dkim.rentdirect_homes.749.onsecureserver.net."
     }
   }
 }

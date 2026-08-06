@@ -1,13 +1,14 @@
-project_name     = "rentdirect"
-environment      = "prod"
-region           = "eu-west-1"
-acm_region       = "us-east-1"
-account_id       = ""
-root_account_id  = "656111643297"
-assume_role      = "Admin"
-root_domain_name = "rentdirect.homes"
-domain_name      = "rentdirect.homes"
-api_domain_name  = "api.rentdirect.homes"
+project_name          = "rentdirect"
+environment           = "prod"
+region                = "eu-west-1"
+acm_region            = "us-east-1"
+account_id            = "126000554558"
+root_account_id       = "573025756531"
+assume_role           = "Admin"
+root_domain_name      = "rentdirect.homes"
+domain_name           = "rentdirect.homes"
+api_domain_name       = "api.rentdirect.homes"
+manage_root_email_dns = false
 
 vpc_cidr               = "10.100.0.0/16"
 container_architecture = "ARM64"
@@ -24,7 +25,7 @@ log_retention_in_days           = 30
 monitoring_alarm_email          = "noreply@rentdirect.homes"
 
 django_allowed_hosts = [
-  "api.rentdirect.homes",
+  "api.rentdirect.homes,rentdirect.homes",
 ]
 
 api = {
