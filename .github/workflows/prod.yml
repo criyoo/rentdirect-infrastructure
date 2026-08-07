@@ -49,6 +49,7 @@ jobs:
               - "terraform/**"
               - ".github/workflows/prod.yml"
 
+
   setup:
     needs: detect-changes
     if: needs.detect-changes.outputs.changes == 'true'
@@ -87,6 +88,7 @@ jobs:
           retention-days: 1
           include-hidden-files: true
 
+
   lint:
     needs:
       - detect-changes
@@ -117,6 +119,7 @@ jobs:
 
       - name: Terraform validate
         run: make lint
+
 
   plan:
     needs:
@@ -156,6 +159,7 @@ jobs:
           path: terraform/tfplan
           retention-days: 1
 
+          
   apply:
     needs:
       - detect-changes

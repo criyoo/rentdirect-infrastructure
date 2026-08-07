@@ -14,7 +14,7 @@ on:
 
 # To control which jobs to run, set the DESTROY_DEV environment variable to "true" or "false"
 env:
-  DESTROY_DEV: "false" # "false" = skip destroy job & "true" = run destroy job.
+  DESTROY_DEV: "false" # false will skip destroy & true will destroy environment.
   AWS_USE_PROFILE: "0"
   AWS_REGION: "eu-west-1"
   TERRAFORM_VERSION: "1.15.0"
@@ -76,6 +76,7 @@ jobs:
               - "terraform/**"
               - ".github/workflows/${{ vars.WORKSPACE }}.yml"
 
+
   setup:
     needs:
       - determine-action
@@ -117,6 +118,7 @@ jobs:
           retention-days: 1
           include-hidden-files: true
 
+
   lint:
     needs:
       - determine-action
@@ -151,6 +153,7 @@ jobs:
         run: | 
           make fmt
           make lint WORKSPACE=${{ vars.WORKSPACE }}
+
 
   plan:
     needs:
@@ -191,6 +194,7 @@ jobs:
           name: tfplan
           path: terraform/tfplan
           retention-days: 1
+
 
   apply:
     needs:

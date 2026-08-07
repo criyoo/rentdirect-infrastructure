@@ -22,7 +22,7 @@ resource "aws_db_instance" "postgres" {
   multi_az                              = var.database.multi_az
   deletion_protection                   = var.database.deletion_protection
   skip_final_snapshot                   = var.database.skip_final_snapshot
-  auto_minor_version_upgrade            = false
+  auto_minor_version_upgrade            = true
   publicly_accessible                   = false
   storage_encrypted                     = true
   performance_insights_enabled          = var.enable_rds_performance_insights
