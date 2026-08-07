@@ -37,9 +37,11 @@ jobs:
     outputs:
       changes: ${{ steps.filter.outputs.infrastructure }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: dorny/paths-filter@v3
+      - name: Check for file Changes
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -47,7 +49,7 @@ jobs:
               - "Makefile"
               - "scripts/**"
               - "terraform/**"
-              - ".github/workflows/prod.yml"
+              - ".github/workflows/${{ vars.WORKSPACE }}.yml"
 
 
   setup:
@@ -57,7 +59,8 @@ jobs:
     timeout-minutes: 5
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Install age
         run: |
@@ -98,7 +101,8 @@ jobs:
     timeout-minutes: 5
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Download decrypted secrets
         uses: actions/download-artifact@v4
@@ -118,7 +122,9 @@ jobs:
           terraform_version: "${{ env.TERRAFORM_VERSION }}"
 
       - name: Terraform validate
-        run: make lint
+        run: | 
+          make fmt
+          make lint WORKSPACE=${{ vars.WORKSPACE }}
 
 
   plan:
@@ -130,7 +136,8 @@ jobs:
     timeout-minutes: 30
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Download decrypted secrets
         uses: actions/download-artifact@v4
@@ -150,7 +157,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform plan
-        run: make plan
+        run: make plan WORKSPACE=${{ vars.WORKSPACE }}
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
@@ -178,7 +185,8 @@ jobs:
           issue-title: "Approve Terraform apply"
           issue-body: "Please approve or deny Terraform apply for production."
 
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Download decrypted secrets
         uses: actions/download-artifact@v4
@@ -204,4 +212,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform apply
-        run: make apply
+        run: make apply WORKSPACE=${{ vars.WORKSPACE }}

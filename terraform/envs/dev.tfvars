@@ -1,15 +1,14 @@
-project_name          = "rentdirect"
-environment           = "dev"
-region                = "eu-west-1"
-acm_region            = "us-east-1"
-account_id            = "016963913218"
-root_account_id       = "573025756531"
-assume_role           = "Admin"
-root_domain_name      = "rentdirect.homes"
-domain_name           = "development.rentdirect.homes"
-api_domain_name       = "api.development.rentdirect.homes"
-manage_root_email_dns = true
-
+project_name           = "rentdirect"
+environment            = "dev"
+region                 = "eu-west-1"
+acm_region             = "us-east-1"
+account_id             = "016963913218"
+root_account_id        = "573025756531"
+assume_role            = "Admin"
+root_domain_name       = "rentdirect.homes"
+domain_name            = "development.rentdirect.homes"
+api_domain_name        = "api.development.rentdirect.homes"
+manage_root_email_dns  = true
 vpc_cidr               = "10.90.0.0/16"
 container_architecture = "ARM64"
 
@@ -72,6 +71,3 @@ tags = {
   Owner       = "platform"
   Environment = "development"
 }
-
-
-#warp_environment_id = "Prk7Wby1WhkH0g38mDhsUs"
