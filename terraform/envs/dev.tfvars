@@ -53,7 +53,7 @@ database = {
   multi_az                = false
   deletion_protection     = false
   skip_final_snapshot     = true
-  engine_version          = "18.1"
+  engine_version          = "18.3"
   name                    = "rentdirect"
   username                = "rentdirect"
 }

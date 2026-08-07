@@ -40,7 +40,7 @@ defaults:
 jobs:
   determine-action:
     name: Determine Terraform Action
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     environment: development
     outputs:
       destroy: ${{ steps.action.outputs.destroy }}
@@ -56,7 +56,7 @@ jobs:
   detect-changes:
     needs: determine-action
     if: ${{ needs.determine-action.outputs.destroy != 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 1
     environment: development
     outputs:
@@ -81,7 +81,7 @@ jobs:
       - determine-action
       - detect-changes
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 2
     environment: development
     steps:
@@ -123,7 +123,7 @@ jobs:
       - detect-changes
       - setup
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 3
     environment: development
     steps:
@@ -158,7 +158,7 @@ jobs:
       - detect-changes
       - lint
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 10
     environment: development
     steps:
@@ -198,7 +198,7 @@ jobs:
       - detect-changes
       - plan
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 30
     environment: development
     steps:
@@ -235,7 +235,7 @@ jobs:
   destroy:
     needs: determine-action
     if: ${{ needs.determine-action.outputs.destroy == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_SERVER }}
     timeout-minutes: 30
     environment: development
     steps:
