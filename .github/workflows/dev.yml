@@ -56,7 +56,7 @@ jobs:
   detect-changes:
     needs: determine-action
     if: ${{ needs.determine-action.outputs.destroy != 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 1
     environment: development
     outputs:
@@ -82,7 +82,7 @@ jobs:
       - determine-action
       - detect-changes
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
     steps:
@@ -125,7 +125,7 @@ jobs:
       - detect-changes
       - setup
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 3
     environment: development
     steps:
@@ -161,7 +161,7 @@ jobs:
       - detect-changes
       - lint
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: development
     steps:
@@ -202,7 +202,7 @@ jobs:
       - detect-changes
       - plan
     if: ${{ needs.determine-action.outputs.destroy != 'true' && needs.detect-changes.outputs.changes == 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
     steps:
@@ -239,7 +239,7 @@ jobs:
   destroy:
     needs: determine-action
     if: ${{ needs.determine-action.outputs.destroy == 'true' }}
-    runs-on: ${{ vars.RUNNER_SERVER }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: development
     steps:
