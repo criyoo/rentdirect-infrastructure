@@ -168,3 +168,30 @@ resource "aws_scheduler_schedule" "subscription_renewals" {
     }
   }
 }
+
+resource "aws_scheduler_schedule" "pending_reconciliation" {
+  name                         = "${var.name_prefix}-pending-payment-reconciliation"
+  group_name                   = aws_scheduler_schedule_group.payment.name
+  schedule_expression          = var.payment_queue.pending_reconciliation_schedule_expression
+  schedule_expression_timezone = "UTC"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  target {
+    arn      = aws_sqs_queue.payment.arn
+    role_arn = aws_iam_role.payment_scheduler.arn
+    input = jsonencode({
+      task = "reconcile_pending_payments"
+      payload = {
+        source = "eventbridge_scheduler"
+      }
+    })
+
+    retry_policy {
+      maximum_event_age_in_seconds = 3600
+      maximum_retry_attempts       = 3
+    }
+  }
+}

@@ -113,6 +113,37 @@ variable "worker" {
   })
 }
 
+variable "flutterwave" {
+  # v3 sandbox & Live = https://api.flutterwave.com/v3
+  # v4 sandbox = https://developersandbox-api.flutterwave.com
+  # v4 Live = https://f4bexperience.flutterwave.com
+   description = "flutterwave payment api url"
+   type = object({
+    api_version = string
+    api_url_v3 = string
+    api_url_v4 = string
+   })
+   
+   default = {
+    api_version = "3"
+    api_url_v3 = "https://api.flutterwave.com/v3" # sandbox & live
+    api_url_v4 = "https://f4bexperience.flutterwave.com" # live
+   }
+}
+
+variable "payment_queue" {
+  description = "SQS payment queue and scheduled payment processing settings."
+  type = object({
+    visibility_timeout_seconds                 = number
+    message_retention_seconds                  = number
+    max_receive_count                          = number
+    receive_wait_time_seconds                  = number
+    ready_payout_schedule_expression           = string
+    subscription_renewal_schedule_expression   = string
+    pending_reconciliation_schedule_expression = string
+  })
+}
+
 variable "database" {
   description = "RDS PostgreSQL settings."
   type = object({

@@ -1,9 +1,12 @@
 locals {
   name_prefix        = "${var.project_name}-${var.environment}"
   project_name       = "rentdirect"
+  applied_prod       = local.is_prod ? "true" : "false"
   is_prod            = var.environment == "prod"
-  migrate_on_startup = local.is_prod ? "false" : "true"
-  seed_demo_accounts = local.is_prod ? "false" : "true"
+  waf_enabled        = local.is_prod && var.enable_waf
+  migrate_on_startup = local.applied_prod
+  seed_demo_accounts = local.applied_prod
+
 
   common_tags = merge(var.tags, {
     Project     = var.project_name
@@ -25,14 +28,24 @@ locals {
     distinct(compact(concat(var.django_allowed_hosts, [var.domain_name, trimspace(var.api_domain_name) != "" ? var.api_domain_name : ""])))
   )
 
-  flutterwave_api_base_url = var.environment == "dev" ? "https://f4bexperience.flutterwave.com" : "https://f4bexperience.flutterwave.com"
-  # v3 sandbox & Live = https://api.flutterwave.com/v3
-  # v4 sandbox = https://developersandbox-api.flutterwave.com
-  # v4 Live = https://f4bexperience.flutterwave.com
-
   api_image_uri = "${module.storage.api_repository_url}:${var.environment}"
 
   api_string_environment = {
+    # Flutterwaves
+    FLUTTERWAVE_API_VERSION = var.flutterwave.api_version
+    FLUTTERWAVE_API_BASE_URL                          = var.flutterwave.api_version == "3" ? var.flutterwave.api_url_v3 : var.flutterwave.api_url_v3 
+    FLUTTERWAVE_TOKEN_URL                             = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
+    FLUTTERWAVE_WEBHOOK_URL                           = "${local.api_origin}/api/v1/payments/webhook/flutterwave"
+    FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 10 # Minutes
+    FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "300"
+
+    # AI Chat Assistant 'Sally' configurations
+    AI_CHAT_BASE_URL = "https://openrouter.ai/api/v1"
+    AI_CHAT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    AI_CHAT_TIMEOUT_SECONDS = 45
+    AI_CHAT_MAX_TOOL_ROUNDS = 4
+    AI_CHAT_SEARCH_LIMIT = 12
+
     DJANGO_SETTINGS_MODULE                    = local.is_prod ? "config.settings.production" : "config.settings.development"
     DJANGO_ENV                                = local.is_prod ? "production" : "development"
     DJANGO_DEBUG                              = "false"
@@ -51,8 +64,8 @@ locals {
     SEED_DEMO_ACCOUNTS                        = local.seed_demo_accounts
     SEED_DEMO_ACCOUNTS_ON_STARTUP             = "0"
     VALKEY_URL                                = module.databases.valkey_url
-    ENFORCE_PRODUCTION_HARDENING              = local.is_prod ? "true" : "false"
-    ENFORCE_FLUTTERWAVE_WEBHOOK_SIGNATURE     = local.is_prod ? "true" : "false"
+    ENFORCE_PRODUCTION_HARDENING              = local.applied_prod
+    ENFORCE_FLUTTERWAVE_WEBHOOK_SIGNATURE     = local.applied_prod
     AWS_STORAGE_BUCKET_NAME                   = module.storage.media_bucket_name
     AWS_S3_REGION_NAME                        = var.region
     AWS_S3_CUSTOM_DOMAIN                      = module.networking.media_domain_name
@@ -62,8 +75,8 @@ locals {
     SESSION_COOKIE_SECURE                     = "true"
     CSRF_COOKIE_SECURE                        = "true"
     SECURE_HSTS_SECONDS                       = local.is_prod ? "31536000" : "3600"
-    SECURE_HSTS_INCLUDE_SUBDOMAINS            = local.is_prod ? "true" : "false"
-    SECURE_HSTS_PRELOAD                       = local.is_prod ? "true" : "false"
+    SECURE_HSTS_INCLUDE_SUBDOMAINS            = local.applied_prod
+    SECURE_HSTS_PRELOAD                       = local.applied_prod
     COOKIE_DOMAIN                             = ".${var.domain_name}"
     SEED_DEMO_ACCOUNTS_WATCH                  = var.environment == "dev" ? "1" : "0"
     SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS = "2"
@@ -76,14 +89,6 @@ locals {
     EMAIL_USE_SSL                             = "false"
     EMAIL_TIMEOUT                             = "60"
     SERVER_EMAIL                              = "info@rentdirect.homes"
-
-    # Flutterwaves
-    FLUTTERWAVE_API_VERSION                           = "4"
-    FLUTTERWAVE_API_BASE_URL                          = local.flutterwave_api_base_url
-    FLUTTERWAVE_TOKEN_URL                             = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
-    FLUTTERWAVE_WEBHOOK_URL                           = "${local.api_origin}/api/v1/payments/webhook/flutterwave"
-    FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 10 # Minutes
-    FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "300"
 
     # Verification
     VERIFICATION_SERVICE = local.verification_service
@@ -105,30 +110,40 @@ locals {
     PREMBLY_WEBHOOK_TOKEN_CACHE_SECONDS  = "604800"
     PREMBLY_CAC_COMPANY_TYPE             = "RC"
 
-    # Rentdirect Operational Account
-    RENTDIRECT_OPERATING_BANK_CODE      = "50515"
-    RENTDIRECT_OPERATING_BANK_NAME      = "Moniepoint"
-    RENTDIRECT_OPERATING_ACCOUNT_NUMBER = "8099446062"
-    RENTDIRECT_OPERATING_ACCOUNT_NAME   = "Christian Odezi Aluya"
+    SUBSCRIPTION_RENEWAL_WATCH_INTERVAL_SECONDS = "3600"
 
-    # Tenants Caution Fee holding accounts
+    # Rentdirect Bank Account & operating-account checkout settlement
+    RENTDIRECT_OPERATING_BANK_CODE               = "100004"
+    RENTDIRECT_OPERATING_BANK_NAME               = "Opay"
+    RENTDIRECT_OPERATING_ACCOUNT_NUMBER          = "9041487757"
+    RENTDIRECT_OPERATING_ACCOUNT_NAME            = "Christian Odezi Aluya"
+    RENTDIRECT_OPERATING_SUBACCOUNT_ID           = ""
+    RENTDIRECT_OPERATING_BUSINESS_EMAIL          = "info@rentdirect.homes"
+    RENTDIRECT_OPERATING_BUSINESS_MOBILE         = "09041487757"
+    RENTDIRECT_OPERATING_SUBACCOUNT_COUNTRY      = "NG"
+    RENTDIRECT_OPERATING_SUBACCOUNT_SPLIT_TYPE   = "flat"
+    RENTDIRECT_OPERATING_SUBACCOUNT_SPLIT_VALUE  = "0"
+    RENTDIRECT_OPERATING_TRANSACTION_CHARGE_TYPE = "flat"
+    RENTDIRECT_OPERATING_TRANSACTION_CHARGE      = "0"
+
+    # Rentdirect VAT holding account
+    RENTDIRECT_VAT_HOLDING_BANK_CODE          = "50515"
+    RENTDIRECT_VAT_HOLDING_BANK_NAME          = "Moniepoint"
+    RENTDIRECT_VAT_HOLDING_ACCOUNT_NUMBER     = "8099446062"
+    RENTDIRECT_VAT_HOLDING_ACCOUNT_NAME       = "Christian Odezi Aluya"
+    RENTDIRECT_VAT_HOLDING_SUBACCOUNT_ID      = ""
+    RENTDIRECT_VAT_HOLDING_BUSINESS_EMAIL     = "noreply@rentdirect.homes"
+    RENTDIRECT_VAT_HOLDING_BUSINESS_MOBILE    = "08099446062"
+    RENTDIRECT_VAT_HOLDING_SUBACCOUNT_COUNTRY = "NG"
+
+    # Tenants
     TENANT_CAUTION_HOLDING_BANK_CODE      = "100033"
     TENANT_CAUTION_HOLDING_BANK_NAME      = "PalmPay"
     TENANT_CAUTION_HOLDING_ACCOUNT_NUMBER = "9041487757"
     TENANT_CAUTION_HOLDING_ACCOUNT_NAME   = "Christian Odezi Aluya"
 
-    # Rentdirect Subscription account
-    RENTDIRECT_SUBSCRIPTION_BANK_CODE               = "214"
-    RENTDIRECT_SUBSCRIPTION_BANK_NAME               = "FCMB"
-    RENTDIRECT_SUBSCRIPTION_ACCOUNT_NUMBER          = "2870390028"
-    RENTDIRECT_SUBSCRIPTION_ACCOUNT_NAME            = "Aluya Christian Odezi"
-    RENTDIRECT_SUBSCRIPTION_BUSINESS_EMAIL          = "noreply@rentdirect.homes"
-    RENTDIRECT_SUBSCRIPTION_BUSINESS_MOBILE         = "08099446062"
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_COUNTRY      = "NG"
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_TYPE   = "flat"
-    RENTDIRECT_SUBSCRIPTION_SUBACCOUNT_SPLIT_VALUE  = "0"
-    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE_TYPE = "flat"
-    RENTDIRECT_SUBSCRIPTION_TRANSACTION_CHARGE      = "0"
+    # VAT on paid tenant and landlord subscriptions and administration fees
+    SUBSCRIPTION_VAT_RATE_PERCENT = "7.5"
   }
 
   api_secure_parameter_arns = {

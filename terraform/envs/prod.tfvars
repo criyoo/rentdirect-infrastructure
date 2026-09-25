@@ -15,7 +15,7 @@ container_architecture = "ARM64"
 
 enable_container_insights       = false
 enable_deletion_protection      = true
-enable_waf                      = true
+enable_waf                      = false
 enable_rds_proxy                = true
 enable_rds_performance_insights = true
 enable_monitoring_alarms        = true
@@ -37,11 +37,21 @@ api = {
   cpu_target    = 70
 }
 
-# Used for payput worker and migration ecs tasks
+# Used for payout worker and migration ECS tasks
 worker = {
   cpu           = 256
   memory        = 512
   desired_count = 1
+}
+
+payment_queue = {
+  visibility_timeout_seconds                 = 300
+  message_retention_seconds                  = 1209600
+  max_receive_count                          = 5
+  receive_wait_time_seconds                  = 20
+  ready_payout_schedule_expression           = "rate(15 minutes)"
+  subscription_renewal_schedule_expression   = "rate(1 hour)"
+  pending_reconciliation_schedule_expression = "rate(5 minutes)"
 }
 
 database = {
@@ -65,22 +75,6 @@ cache = {
   multi_az_enabled           = false
   transit_encryption_enabled = true
 }
-
-# app_string_parameters = {
-#   DEFAULT_FROM_EMAIL = "noreply@rentdirect.homes"
-#   EMAIL_BACKEND      = "django.core.mail.backends.smtp.EmailBackend"
-#   EMAIL_HOST         = "smtpout.secureserver.net"
-#   EMAIL_PORT         = "587"
-#   EMAIL_HOST_USER    = "info@rentdirect.homes"
-#   EMAIL_USE_TLS      = "true"
-#   EMAIL_USE_SSL      = "false"
-#   EMAIL_TIMEOUT      = "60"
-#   SERVER_EMAIL       = "info@rentdirect.homes"
-#   FLUTTERWAVE_V3_API_BASE_URL = "https://api.flutterwave.com/v3"
-#   FLUTTERWAVE_API_BASE_URL    = "https://f4bexperience.flutterwave.com"
-#   FLUTTERWAVE_TOKEN_URL       = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
-#   SEED_DEMO_ACCOUNTS   = "false"
-# }
 
 tags = {
   Project     = "rentdirect"

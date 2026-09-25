@@ -9,6 +9,7 @@ locals {
     PAYMENT_QUEUE_VISIBILITY_TIMEOUT_SECONDS            = tostring(var.payment_queue.visibility_timeout_seconds)
     PAYMENT_QUEUE_READY_PAYOUT_INTERVAL_SECONDS         = "900"
     PAYMENT_QUEUE_SUBSCRIPTION_RENEWAL_INTERVAL_SECONDS = "3600"
+    PAYMENT_QUEUE_RECONCILIATION_INTERVAL_SECONDS       = "300"
   }
 
   container_environment = merge(var.api_string_environment, local.payment_queue_environment)

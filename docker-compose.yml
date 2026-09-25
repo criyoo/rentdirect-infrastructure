@@ -6,7 +6,7 @@
 # api 8600
 
 services:
-  postgres:
+  rd-postgres:
     image: postgres:18.4-alpine
     environment:
       POSTGRES_DB: rentdirectdb
@@ -23,7 +23,7 @@ services:
       - "5600:5432"
     networks: [ rentdirect-network ]
 
-  valkey:
+  rd-valkey:
     image: valkey/valkey:9.1.0-alpine
     environment:
       ALLOW_EMPTY_PASSWORD: yes
@@ -33,7 +33,7 @@ services:
       timeout: 5s
       retries: 5
     depends_on:
-      postgres:
+      rd-postgres:
         condition: service_healthy
     ports:
       - "6600:6379"
@@ -41,7 +41,7 @@ services:
       - rentdirect_valkey_data:/data
     networks: [ rentdirect-network ]
 
-  minio:
+  rd-minio:
     image: quay.io/minio/minio:latest
     command: server /data --address ":9000" --console-address ":9001"
     environment:
@@ -54,16 +54,16 @@ services:
       - rentdirect_minio_data:/data
     networks: [ rentdirect-network ]
 
-  minio-create-bucket:
+  rd-minio-create-bucket:
     image: quay.io/minio/mc:latest
     depends_on:
-      minio:
+      rd-minio:
         condition: service_started
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+        until mc alias set local http://rd-minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
           sleep 1
         done
         mc mb --ignore-existing local/rentdirect-local-media
@@ -73,7 +73,7 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     networks: [ rentdirect-network ]
 
-  cloudflared:
+  rd-cloudflared:
     build:
       context: ./cloudflared
       dockerfile: Dockerfile
@@ -92,26 +92,27 @@ services:
       - rentdirect_cloudflared_data:/data
     networks: [ rentdirect-network ]
 
-  migrate:
+  rd-migrate:
     build:
       context: ../apps/api
       dockerfile: Dockerfile
       target: development
     env_file:
-      - ../apps/api/.env.local
+      - ../apps/api/.env.docker
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings.docker
       SEED_DEMO_ACCOUNTS: "1"
       COLLECTSTATIC_ON_STARTUP: "1"
-      DJANGO_SUPERUSER_EMAIL: "admin@rentdirect.homes"
+      HOMEPAGE_VIDEO_SOURCE_PATH: /tmp/rentdirect-homepage-video.mp4
+      DJANGO_SUPERUSER_EMAIL: "admin@local.rentdirect.homes"
       DJANGO_SUPERUSER_PASSWORD: "ifG0dbi4mi"
       DJANGO_SUPERUSER_NAME: "Admin"
     depends_on:
-      postgres:
+      rd-postgres:
         condition: service_healthy
-      valkey:
+      rd-valkey:
         condition: service_healthy
-      minio-create-bucket:
+      rd-minio-create-bucket:
         condition: service_completed_successfully
     command:
       - /bin/sh
@@ -120,41 +121,44 @@ services:
     volumes:
       - ../apps/api:/app
       - rentdirect_media_files:/app/uploads
+      - ../apps/api/uploads/seed/video/rentdirect.mp4:/tmp/rentdirect-homepage-video.mp4:ro
     networks: [ rentdirect-network ]
 
-  api:
+  rd-api:
     build:
       context: ../apps/api
       dockerfile: Dockerfile
       target: cloudflare
     env_file:
-      - ../apps/api/.env.local
+      - ../apps/api/.env.docker
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_SETTINGS_MODULE: config.settings.docker
       MIGRATE_ON_STARTUP: "0"
+      HOMEPAGE_VIDEO_SOURCE_PATH: /tmp/rentdirect-homepage-video.mp4
+      HOMEPAGE_VIDEO_STORAGE_NAME: ""
       SEED_DEMO_ACCOUNTS: "1"
       SEED_DEMO_ACCOUNTS_ON_STARTUP: "0"
       SEED_DEMO_ACCOUNTS_WATCH: "1"
       SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS: "2"
-      VALKEY_URL: redis://valkey:6379/0
+      VALKEY_URL: redis://rd-valkey:6379/0
       PAYMENT_QUEUE_BACKEND: rq
       PAYMENT_QUEUE_NAME: rentdirect-payments
-      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_REDIS_URL: redis://rd-valkey:6379/0
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
       CLOUDFLARE_WAIT_ATTEMPTS: "60"
       CLOUDFLARE_TUNNEL_URL_FILE: /data/cloudflared/tunnel-url
       FLUTTERWAVE_WEBHOOK_PATH: /api/v1/payments/webhook/flutterwave # update base url on restart
       VERIFICATION_SERVICE: prembly
     depends_on:
-      migrate:
+      rd-migrate:
         condition: service_completed_successfully
-      postgres:
+      rd-postgres:
         condition: service_healthy
-      valkey:
+      rd-valkey:
         condition: service_healthy
-      cloudflared:
+      rd-cloudflared:
         condition: service_healthy
-      minio-create-bucket:
+      rd-minio-create-bucket:
         condition: service_completed_successfully
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/health/ready >/dev/null" ]
@@ -166,33 +170,34 @@ services:
       - ../apps/api:/app
       - rentdirect_cloudflared_data:/data:ro
       - rentdirect_media_files:/app/uploads
+      - ../apps/api/uploads/seed/video/rentdirect.mp4:/tmp/rentdirect-homepage-video.mp4:ro
     ports:
       - "8600:8000"
     networks: [ rentdirect-network ]
 
-  payment-worker:
+  rd-payment-worker:
     build:
       context: ../apps/api
       target: development
     env_file:
-      - ../apps/api/.env
+      - ../apps/api/.env.docker
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
-      VALKEY_URL: redis://valkey:6379/0
+      DJANGO_SETTINGS_MODULE: config.settings.docker
+      VALKEY_URL: redis://rd-valkey:6379/0
       PAYMENT_QUEUE_BACKEND: rq
       PAYMENT_QUEUE_NAME: rentdirect-payments
-      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_REDIS_URL: redis://rd-valkey:6379/0
       FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS: "300"
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES: "10"
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
     depends_on:
-      api:
+      rd-api:
         condition: service_healthy
-      postgres:
+      rd-postgres:
         condition: service_healthy
-      valkey:
+      rd-valkey:
         condition: service_healthy
-      minio-create-bucket:
+      rd-minio-create-bucket:
         condition: service_completed_successfully
     volumes:
       - ../apps/api:/app
@@ -201,29 +206,30 @@ services:
     restart: unless-stopped
     networks: [ rentdirect-network ]
 
-  payment-scheduler:
+  rd-payment-scheduler:
     build:
       context: ../apps/api
       target: development
     env_file:
-      - ../apps/api/.env
+      - ../apps/api/.env.docker
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.local
-      VALKEY_URL: redis://valkey:6379/0
+      DJANGO_SETTINGS_MODULE: config.settings.docker
+      VALKEY_URL: redis://rd-valkey:6379/0
       PAYMENT_QUEUE_BACKEND: rq
       PAYMENT_QUEUE_NAME: rentdirect-payments
-      PAYMENT_QUEUE_REDIS_URL: redis://valkey:6379/0
+      PAYMENT_QUEUE_REDIS_URL: redis://rd-valkey:6379/0
       PAYMENT_QUEUE_READY_PAYOUT_INTERVAL_SECONDS: "300"
       PAYMENT_QUEUE_SUBSCRIPTION_RENEWAL_INTERVAL_SECONDS: "3600"
+      PAYMENT_QUEUE_RECONCILIATION_INTERVAL_SECONDS: "300"
       FLUTTERWAVE_PAYOUT_BALANCE_DELAY_HOURS: "24"
     depends_on:
-      api:
+      rd-api:
         condition: service_healthy
-      payment-worker:
+      rd-payment-worker:
         condition: service_started
-      postgres:
+      rd-postgres:
         condition: service_healthy
-      valkey:
+      rd-valkey:
         condition: service_healthy
     volumes:
       - ../apps/api:/app
@@ -232,7 +238,7 @@ services:
     restart: unless-stopped
     networks: [ rentdirect-network ]
 
-  web:
+  rd-web:
     build:
       context: ../apps/web
       dockerfile: Dockerfile.local
@@ -240,7 +246,7 @@ services:
       VITE_API_URL: http://localhost:8600/api/v1
       VITE_MEDIA_URL: http://localhost:8600/uploads
     depends_on:
-      api:
+      rd-api:
         condition: service_started
     healthcheck:
       test: [ "CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3600').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))\"" ]

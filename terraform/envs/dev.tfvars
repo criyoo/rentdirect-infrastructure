@@ -37,11 +37,21 @@ api = {
   cpu_target    = 80
 }
 
-# Used for payput worker and migration ecs tasks
+# Used for payout worker and migration ecs tasks
 worker = {
   cpu           = 256
   memory        = 512
   desired_count = 1
+}
+
+payment_queue = {
+  visibility_timeout_seconds                 = 300
+  message_retention_seconds                  = 1209600
+  max_receive_count                          = 5
+  receive_wait_time_seconds                  = 20
+  ready_payout_schedule_expression           = "rate(15 minutes)"
+  subscription_renewal_schedule_expression   = "rate(1 hour)"
+  pending_reconciliation_schedule_expression = "rate(5 minutes)"
 }
 
 database = {
@@ -70,4 +80,5 @@ tags = {
   Project     = "rentdirect"
   Owner       = "platform"
   Environment = "development"
+  ManageBy    = "terraform"
 }

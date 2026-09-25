@@ -10,7 +10,7 @@ module "security" {
   name_prefix             = local.name_prefix
   common_tags             = local.common_tags
   root_domain_name        = var.root_domain_name
-  enabled                 = true
+  enabled                 = local.waf_enabled
   rate_limit              = 2000
   domain_name             = var.domain_name
   api_domain_name         = var.api_domain_name
@@ -46,8 +46,8 @@ module "networking" {
   enable_deletion_protection           = var.enable_deletion_protection
   enable_alb_https_redirect            = var.enable_alb_https_redirect
   alb_health_check_interval            = var.alb_health_check_interval
-  cloudfront_web_acl_arn               = var.enable_waf ? module.security.cloudfront_web_acl_arn : null
-  enable_waf                           = var.enable_waf
+  cloudfront_web_acl_arn               = local.waf_enabled ? module.security.cloudfront_web_acl_arn : null
+  enable_waf                           = local.waf_enabled
 }
 
 
@@ -93,6 +93,7 @@ module "ecs_service" {
   log_retention_in_days     = var.log_retention_in_days
   api                       = var.api
   worker                    = var.worker
+  payment_queue             = var.payment_queue
   api_image_uri             = local.api_image_uri
   api_string_environment    = local.api_string_environment
   api_secrets               = local.api_secrets

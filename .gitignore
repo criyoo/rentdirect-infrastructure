@@ -3,10 +3,9 @@
 # ================================
 .env.dev
 .env.prod
-# Encrypted environment files should be tracked.
-!.env.*.age
-# Environment templates should be tracked.
-!.env.*.example
+terraform/envs/secrets/.env.dev
+terraform/envs/secrets/.env.prod
+
 *.pem
 *.key
 *.cert
@@ -117,4 +116,6 @@ Desktop.ini
 .settings/
 .classpath
 .factorypath
+.vscode
+.kilo
 .kilocode

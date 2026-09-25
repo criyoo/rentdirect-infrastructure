@@ -23,20 +23,20 @@ output "media_url" {
 #   value       = module.databases.database_endpoint
 # }
 
-# output "payment_queue_url" {
-#   description = "Payment processing SQS queue URL."
-#   value       = module.ecs_service.payment_queue_url
-# }
+output "payment_queue_url" {
+  description = "Payment processing SQS queue URL."
+  value       = module.ecs_service.payment_queue_url
+}
 
-# output "payment_queue_arn" {
-#   description = "Payment processing SQS queue ARN."
-#   value       = module.ecs_service.payment_queue_arn
-# }
+output "payment_queue_arn" {
+  description = "Payment processing SQS queue ARN."
+  value       = module.ecs_service.payment_queue_arn
+}
 
-# output "payment_queue_dlq_arn" {
-#   description = "Payment processing SQS dead-letter queue ARN."
-#   value       = module.ecs_service.payment_queue_dlq_arn
-# }
+output "payment_queue_dlq_arn" {
+  description = "Payment processing SQS dead-letter queue ARN."
+  value       = module.ecs_service.payment_queue_dlq_arn
+}
 
 # output "static_egress_ip" {
 #   description = "Static outbound IP for ECS tasks; whitelist this IP with Flutterwave."
