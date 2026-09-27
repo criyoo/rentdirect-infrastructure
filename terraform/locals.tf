@@ -32,19 +32,20 @@ locals {
 
   api_string_environment = {
     # Flutterwaves
-    FLUTTERWAVE_API_VERSION = var.flutterwave.api_version
-    FLUTTERWAVE_API_BASE_URL                          = var.flutterwave.api_version == "3" ? var.flutterwave.api_url_v3 : var.flutterwave.api_url_v3 
+    FLUTTERWAVE_API_VERSION                           = var.flutterwave.api_version
+    FLUTTERWAVE_API_BASE_URL                          = var.flutterwave.api_version == "3" ? var.flutterwave.api_url_v3 : var.flutterwave.api_url_v3
     FLUTTERWAVE_TOKEN_URL                             = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
     FLUTTERWAVE_WEBHOOK_URL                           = "${local.api_origin}/api/v1/payments/webhook/flutterwave"
     FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 10 # Minutes
     FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "300"
 
     # AI Chat Assistant 'Sally' configurations
-    AI_CHAT_BASE_URL = "https://openrouter.ai/api/v1"
-    AI_CHAT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    AI_CHAT_BASE_URL        = "https://openrouter.ai/api/v1"
+    AI_CHAT_MODEL           = "nvidia/nemotron-3.5-lightning:free"
+    AI_CHAT_FALLBACK_MODELS = "nvidia/nemotron-3-ultra-550b-a55b:free,thinkingmachines/inkling:free,thinkingmachines/inkling-small:free,stealth/space-bunny-alpha"
     AI_CHAT_TIMEOUT_SECONDS = 45
     AI_CHAT_MAX_TOOL_ROUNDS = 4
-    AI_CHAT_SEARCH_LIMIT = 12
+    AI_CHAT_SEARCH_LIMIT    = 12
 
     DJANGO_SETTINGS_MODULE                    = local.is_prod ? "config.settings.production" : "config.settings.development"
     DJANGO_ENV                                = local.is_prod ? "production" : "development"
@@ -80,6 +81,8 @@ locals {
     COOKIE_DOMAIN                             = ".${var.domain_name}"
     SEED_DEMO_ACCOUNTS_WATCH                  = var.environment == "dev" ? "1" : "0"
     SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS = "2"
+
+    # Email settings
     DEFAULT_FROM_EMAIL                        = "noreply@rentdirect.homes"
     EMAIL_BACKEND                             = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST                                = "smtpout.secureserver.net"
