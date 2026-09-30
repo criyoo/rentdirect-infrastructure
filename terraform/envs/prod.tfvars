@@ -15,7 +15,7 @@ container_architecture = "ARM64"
 
 enable_container_insights       = false
 enable_deletion_protection      = true
-enable_waf                      = false
+enable_waf                      = true
 enable_rds_proxy                = true
 enable_rds_performance_insights = true
 enable_monitoring_alarms        = true
@@ -31,8 +31,9 @@ django_allowed_hosts = [
 api = {
   cpu           = 1024
   memory        = 2048
+  port          = 8000
   desired_count = 1
-  min_count     = 2
+  min_count     = 1
   max_count     = 4
   cpu_target    = 70
 }
@@ -57,7 +58,7 @@ payment_queue = {
 database = {
   instance_class          = "db.t4g.small"
   allocated_storage       = 20
-  max_allocated_storage   = 500
+  max_allocated_storage   = 1000
   backup_retention_period = 7
   multi_az                = false
   deletion_protection     = true
@@ -80,4 +81,5 @@ tags = {
   Project     = "rentdirect"
   Owner       = "platform"
   Environment = "production"
+  ManageBy    = "terraform"
 }

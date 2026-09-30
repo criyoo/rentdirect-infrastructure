@@ -1,6 +1,6 @@
 FROM cloudflare/cloudflared:latest AS cloudflared
 
-FROM alpine:3.22
+FROM alpine:3.24.2
 
 RUN apk add --no-cache \
     ca-certificates \

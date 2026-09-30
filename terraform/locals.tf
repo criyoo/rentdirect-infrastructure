@@ -21,8 +21,6 @@ locals {
   api_origin       = trimspace(var.api_domain_name) != "" ? "https://${var.api_domain_name}" : local.frontend_origin
   websocket_origin = trimspace(var.api_domain_name) != "" ? "wss://${var.api_domain_name}" : "wss://${var.domain_name}"
 
-  verification_service = var.environment == "dev" ? "prembly" : "prembly" #"dikript"
-
   api_allowed_hosts = join(
     ",",
     distinct(compact(concat(var.django_allowed_hosts, [var.domain_name, trimspace(var.api_domain_name) != "" ? var.api_domain_name : ""])))
@@ -36,7 +34,7 @@ locals {
     FLUTTERWAVE_API_BASE_URL                          = var.flutterwave.api_version == "3" ? var.flutterwave.api_url_v3 : var.flutterwave.api_url_v3
     FLUTTERWAVE_TOKEN_URL                             = "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
     FLUTTERWAVE_WEBHOOK_URL                           = "${local.api_origin}/api/v1/payments/webhook/flutterwave"
-    FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 10 # Minutes
+    FLUTTERWAVE_PAYOUT_BALANCE_DELAY_MINUTES          = 1440 # Minutes
     FLUTTERWAVE_PAYOUT_RELEASE_WATCH_INTERVAL_SECONDS = "300"
 
     # AI Chat Assistant 'Sally' configurations
@@ -94,7 +92,7 @@ locals {
     SERVER_EMAIL                              = "info@rentdirect.homes"
 
     # Verification
-    VERIFICATION_SERVICE = local.verification_service
+    VERIFICATION_SERVICE = "prembly" # or "dikript"
 
     # Dikript
     DIKRIPT_API_BASE_URL    = "https://api.dikript.com"
@@ -114,36 +112,6 @@ locals {
     PREMBLY_CAC_COMPANY_TYPE             = "RC"
 
     SUBSCRIPTION_RENEWAL_WATCH_INTERVAL_SECONDS = "3600"
-
-    # Rentdirect Bank Account & operating-account checkout settlement
-    RENTDIRECT_OPERATING_BANK_CODE               = "100004"
-    RENTDIRECT_OPERATING_BANK_NAME               = "Opay"
-    RENTDIRECT_OPERATING_ACCOUNT_NUMBER          = "9041487757"
-    RENTDIRECT_OPERATING_ACCOUNT_NAME            = "Christian Odezi Aluya"
-    RENTDIRECT_OPERATING_SUBACCOUNT_ID           = ""
-    RENTDIRECT_OPERATING_BUSINESS_EMAIL          = "info@rentdirect.homes"
-    RENTDIRECT_OPERATING_BUSINESS_MOBILE         = "09041487757"
-    RENTDIRECT_OPERATING_SUBACCOUNT_COUNTRY      = "NG"
-    RENTDIRECT_OPERATING_SUBACCOUNT_SPLIT_TYPE   = "flat"
-    RENTDIRECT_OPERATING_SUBACCOUNT_SPLIT_VALUE  = "0"
-    RENTDIRECT_OPERATING_TRANSACTION_CHARGE_TYPE = "flat"
-    RENTDIRECT_OPERATING_TRANSACTION_CHARGE      = "0"
-
-    # Rentdirect VAT holding account
-    RENTDIRECT_VAT_HOLDING_BANK_CODE          = "50515"
-    RENTDIRECT_VAT_HOLDING_BANK_NAME          = "Moniepoint"
-    RENTDIRECT_VAT_HOLDING_ACCOUNT_NUMBER     = "8099446062"
-    RENTDIRECT_VAT_HOLDING_ACCOUNT_NAME       = "Christian Odezi Aluya"
-    RENTDIRECT_VAT_HOLDING_SUBACCOUNT_ID      = ""
-    RENTDIRECT_VAT_HOLDING_BUSINESS_EMAIL     = "noreply@rentdirect.homes"
-    RENTDIRECT_VAT_HOLDING_BUSINESS_MOBILE    = "08099446062"
-    RENTDIRECT_VAT_HOLDING_SUBACCOUNT_COUNTRY = "NG"
-
-    # Tenants
-    TENANT_CAUTION_HOLDING_BANK_CODE      = "100033"
-    TENANT_CAUTION_HOLDING_BANK_NAME      = "PalmPay"
-    TENANT_CAUTION_HOLDING_ACCOUNT_NUMBER = "9041487757"
-    TENANT_CAUTION_HOLDING_ACCOUNT_NAME   = "Christian Odezi Aluya"
 
     # VAT on paid tenant and landlord subscriptions and administration fees
     SUBSCRIPTION_VAT_RATE_PERCENT = "7.5"
