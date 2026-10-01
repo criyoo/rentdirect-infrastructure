@@ -9,7 +9,7 @@ DECRYPTED_ENV_FILE := envs/secrets/.env.$(WORKSPACE)
 LOCK_FILE := s3://rentdirect-terraform-statefile/envs/$(WORKSPACE)/rentdirect.tfstate.tflock
 LOAD_ENV := set -a && . "$(DECRYPTED_ENV_FILE)" && set +a
 
-.PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig workspace validate lint plan plan-nolock apply apply-plan show-egress-ip refresh destroy console list unlock
+.PHONY: setup decrypt encrypt encrypt-all load-env fmt init reconfig guard-workspace workspace validate lint plan plan-nolock apply apply-plan show-egress-ip refresh destroy console list unlock
 
 
 # Secrets
@@ -45,12 +45,29 @@ migrate-state: fmt
 reconfig: fmt
 	@$(TF) init -input=false -reconfigure
 
-workspace: init
-	@$(TF) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF) workspace new $(WORKSPACE)
+guard-workspace:
+	@case "$(WORKSPACE)" in \
+		dev|prod) ;; \
+		*) echo "Error: WORKSPACE must be 'dev' or 'prod', got '$(WORKSPACE)'." >&2; exit 1 ;; \
+	esac
+	@grep -Eq '^[[:space:]]*environment[[:space:]]*=[[:space:]]*"$(WORKSPACE)"' "envs/$(WORKSPACE).tfvars" || { \
+		echo "Error: envs/$(WORKSPACE).tfvars does not declare environment = \"$(WORKSPACE)\"." >&2; \
+		exit 1; \
+	}
 
-lint: load-env workspace
-	@$(TF) fmt -diff -check -recursive
+workspace: guard-workspace init
+	@$(TF) workspace select $(WORKSPACE) >/dev/null 2>&1 || $(TF) workspace new $(WORKSPACE)
+	@current_workspace="$$( $(TF) workspace show )"; \
+	if [ "$$current_workspace" != "$(WORKSPACE)" ]; then \
+		echo "Error: Terraform workspace is '$$current_workspace', expected '$(WORKSPACE)'." >&2; \
+		exit 1; \
+	fi
+
+validate: load-env workspace
 	@$(LOAD_ENV) && $(TF) validate
+
+lint: validate
+	@$(TF) fmt -diff -check -recursive
 
 plan-nolock: validate
 	@$(LOAD_ENV) && $(TF) plan $(WORKSPACE_VARS) -lock=false

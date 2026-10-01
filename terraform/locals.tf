@@ -90,6 +90,7 @@ locals {
     EMAIL_USE_SSL      = "false"
     EMAIL_TIMEOUT      = "60"
     SERVER_EMAIL       = "info@rentdirect.homes"
+    RENT_RENEWAL_EMAIL = "rent-renewal@rentdirect.homes"
 
     # Verification
     VERIFICATION_SERVICE = "prembly" # or "dikript"

@@ -22,6 +22,7 @@ resource "aws_db_instance" "postgres" {
   multi_az                              = var.database.multi_az
   deletion_protection                   = var.database.deletion_protection
   skip_final_snapshot                   = var.database.skip_final_snapshot
+  final_snapshot_identifier             = "${var.name_prefix}-postgres-${random_string.random.result}"
   auto_minor_version_upgrade            = true
   publicly_accessible                   = false
   storage_encrypted                     = true
@@ -29,4 +30,10 @@ resource "aws_db_instance" "postgres" {
   performance_insights_retention_period = var.enable_rds_performance_insights ? 7 : null
 
   tags = var.common_tags
+}
+
+resource "random_string" "random" {
+  length           = 8
+  special          = true
+  override_special = "-"
 }

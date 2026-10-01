@@ -45,13 +45,14 @@ worker = {
 }
 
 payment_queue = {
-  visibility_timeout_seconds                 = 300
-  message_retention_seconds                  = 1209600
-  max_receive_count                          = 5
-  receive_wait_time_seconds                  = 20
-  ready_payout_schedule_expression           = "rate(15 minutes)"
-  subscription_renewal_schedule_expression   = "rate(1 hour)"
-  pending_reconciliation_schedule_expression = "rate(5 minutes)"
+  visibility_timeout_seconds                   = 300
+  message_retention_seconds                    = 1209600
+  max_receive_count                            = 5
+  receive_wait_time_seconds                    = 20
+  ready_payout_schedule_expression             = "rate(15 minutes)"
+  subscription_renewal_schedule_expression     = "rate(1 hour)"
+  pending_reconciliation_schedule_expression   = "rate(5 minutes)"
+  tenancy_renewal_reminder_schedule_expression = "rate(1 hour)"
 }
 
 database = {

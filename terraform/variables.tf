@@ -134,13 +134,14 @@ variable "flutterwave" {
 variable "payment_queue" {
   description = "SQS payment queue and scheduled payment processing settings."
   type = object({
-    visibility_timeout_seconds                 = number
-    message_retention_seconds                  = number
-    max_receive_count                          = number
-    receive_wait_time_seconds                  = number
-    ready_payout_schedule_expression           = string
-    subscription_renewal_schedule_expression   = string
-    pending_reconciliation_schedule_expression = string
+    visibility_timeout_seconds                   = number
+    message_retention_seconds                    = number
+    max_receive_count                            = number
+    receive_wait_time_seconds                    = number
+    ready_payout_schedule_expression             = string
+    subscription_renewal_schedule_expression     = string
+    pending_reconciliation_schedule_expression   = string
+    tenancy_renewal_reminder_schedule_expression = string
   })
 }
 
