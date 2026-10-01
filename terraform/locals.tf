@@ -81,15 +81,15 @@ locals {
     SEED_DEMO_ACCOUNTS_WATCH_INTERVAL_SECONDS = "2"
 
     # Email settings
-    DEFAULT_FROM_EMAIL                        = "noreply@rentdirect.homes"
-    EMAIL_BACKEND                             = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST                                = "smtpout.secureserver.net"
-    EMAIL_PORT                                = "587"
-    EMAIL_HOST_USER                           = "info@rentdirect.homes"
-    EMAIL_USE_TLS                             = "true"
-    EMAIL_USE_SSL                             = "false"
-    EMAIL_TIMEOUT                             = "60"
-    SERVER_EMAIL                              = "info@rentdirect.homes"
+    DEFAULT_FROM_EMAIL = "noreply@rentdirect.homes"
+    EMAIL_BACKEND      = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST         = "smtpout.secureserver.net"
+    EMAIL_PORT         = "587"
+    EMAIL_HOST_USER    = "info@rentdirect.homes"
+    EMAIL_USE_TLS      = "true"
+    EMAIL_USE_SSL      = "false"
+    EMAIL_TIMEOUT      = "60"
+    SERVER_EMAIL       = "info@rentdirect.homes"
 
     # Verification
     VERIFICATION_SERVICE = "prembly" # or "dikript"

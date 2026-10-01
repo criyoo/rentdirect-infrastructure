@@ -117,18 +117,18 @@ variable "flutterwave" {
   # v3 sandbox & Live = https://api.flutterwave.com/v3
   # v4 sandbox = https://developersandbox-api.flutterwave.com
   # v4 Live = https://f4bexperience.flutterwave.com
-   description = "flutterwave payment api url"
-   type = object({
+  description = "flutterwave payment api url"
+  type = object({
     api_version = string
-    api_url_v3 = string
-    api_url_v4 = string
-   })
-   
-   default = {
+    api_url_v3  = string
+    api_url_v4  = string
+  })
+
+  default = {
     api_version = "3"
-    api_url_v3 = "https://api.flutterwave.com/v3" # sandbox & live
-    api_url_v4 = "https://f4bexperience.flutterwave.com" # live
-   }
+    api_url_v3  = "https://api.flutterwave.com/v3"        # sandbox & live
+    api_url_v4  = "https://f4bexperience.flutterwave.com" # live
+  }
 }
 
 variable "payment_queue" {

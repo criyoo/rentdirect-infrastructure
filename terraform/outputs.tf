@@ -1,18 +1,3 @@
-output "frontend_url" {
-  description = "Public frontend URL."
-  value       = module.networking.frontend_url
-}
-
-output "api_url" {
-  description = "Public API URL."
-  value       = module.networking.api_url
-}
-
-output "media_url" {
-  description = "Public media URL."
-  value       = module.networking.media_url
-}
-
 # output "cluster_name" {
 #   description = "ECS cluster name."
 #   value       = module.ecs_service.cluster_name
@@ -21,26 +6,6 @@ output "media_url" {
 # output "database_endpoint" {
 #   description = "Database endpoint used by the API (RDS Proxy when enabled)."
 #   value       = module.databases.database_endpoint
-# }
-
-output "payment_queue_url" {
-  description = "Payment processing SQS queue URL."
-  value       = module.ecs_service.payment_queue_url
-}
-
-output "payment_queue_arn" {
-  description = "Payment processing SQS queue ARN."
-  value       = module.ecs_service.payment_queue_arn
-}
-
-output "payment_queue_dlq_arn" {
-  description = "Payment processing SQS dead-letter queue ARN."
-  value       = module.ecs_service.payment_queue_dlq_arn
-}
-
-# output "static_egress_ip" {
-#   description = "Static outbound IP for ECS tasks; whitelist this IP with Flutterwave."
-#   value       = module.networking.static_egress_ip
 # }
 
 # output "region" {
@@ -102,3 +67,40 @@ output "payment_queue_dlq_arn" {
 #   description = "CloudFront distribution ID for the media bucket."
 #   value       = module.networking.media_cloudfront_distribution_id
 # }
+
+output "frontend_url" {
+  description = "Public frontend URL."
+  value       = module.networking.frontend_url
+}
+
+output "api_url" {
+  description = "Public API URL."
+  value       = module.networking.api_url
+}
+
+output "media_url" {
+  description = "Public media URL."
+  value       = module.networking.media_url
+}
+
+
+output "payment_queue_url" {
+  description = "Payment processing SQS queue URL."
+  value       = module.ecs_service.payment_queue_url
+}
+
+output "payment_queue_arn" {
+  description = "Payment processing SQS queue ARN."
+  value       = module.ecs_service.payment_queue_arn
+}
+
+output "payment_queue_dlq_arn" {
+  description = "Payment processing SQS dead-letter queue ARN."
+  value       = module.ecs_service.payment_queue_dlq_arn
+}
+
+
+output "static_egress_ip" {
+  description = "Static outbound IP for ECS tasks; whitelist this IP with Flutterwave."
+  value       = module.networking.static_egress_ip
+}

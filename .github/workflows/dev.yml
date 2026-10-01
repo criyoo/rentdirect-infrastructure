@@ -72,6 +72,7 @@ jobs:
           filters: |
             infra:
               - "Makefile"
+              - "docs/**"
               - "scripts/**"
               - "terraform/**"
               - ".github/workflows/${{ vars.WORKSPACE }}.yml"
