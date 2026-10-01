@@ -1,6 +1,6 @@
 resource "aws_secretsmanager_secret" "rds_proxy" {
   for_each = var.enable_rds_proxy ? { enabled = true } : {}
-  name     = "${var.name_prefix}-rds-proxy-credentials"
+  name     = "${var.name_prefix}-rds-proxy-creds"
   tags     = var.common_tags
 }
 
