@@ -68,36 +68,36 @@
 #   value       = module.networking.media_cloudfront_distribution_id
 # }
 
-output "frontend_url" {
-  description = "Public frontend URL."
-  value       = module.networking.frontend_url
-}
+# output "frontend_url" {
+#   description = "Public frontend URL."
+#   value       = module.networking.frontend_url
+# }
 
-output "api_url" {
-  description = "Public API URL."
-  value       = module.networking.api_url
-}
+# output "api_url" {
+#   description = "Public API URL."
+#   value       = module.networking.api_url
+# }
 
-output "media_url" {
-  description = "Public media URL."
-  value       = module.networking.media_url
-}
+# output "media_url" {
+#   description = "Public media URL."
+#   value       = module.networking.media_url
+# }
 
 
-output "payment_queue_url" {
-  description = "Payment processing SQS queue URL."
-  value       = module.ecs_service.payment_queue_url
-}
+# output "payment_queue_url" {
+#   description = "Payment processing SQS queue URL."
+#   value       = module.ecs_service.payment_queue_url
+# }
 
-output "payment_queue_arn" {
-  description = "Payment processing SQS queue ARN."
-  value       = module.ecs_service.payment_queue_arn
-}
+# output "payment_queue_arn" {
+#   description = "Payment processing SQS queue ARN."
+#   value       = module.ecs_service.payment_queue_arn
+# }
 
-output "payment_queue_dlq_arn" {
-  description = "Payment processing SQS dead-letter queue ARN."
-  value       = module.ecs_service.payment_queue_dlq_arn
-}
+# output "payment_queue_dlq_arn" {
+#   description = "Payment processing SQS dead-letter queue ARN."
+#   value       = module.ecs_service.payment_queue_dlq_arn
+# }
 
 
 output "static_egress_ip" {
