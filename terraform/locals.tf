@@ -95,13 +95,6 @@ locals {
     # Verification
     VERIFICATION_SERVICE = "prembly" # or "dikript"
 
-    # Dikript
-    DIKRIPT_API_BASE_URL    = "https://api.dikript.com"
-    DIKRIPT_NIN_API_URL     = "/dikript/verification/api/v1/getnin"
-    DIKRIPT_BVN_API_URL     = "/dikript/verification/api/v1/getbvn"
-    DIKRIPT_CAC_API_URL     = "/dikript/verification/api/v1/getcacbasic"
-    DIKRIPT_TIMEOUT_SECONDS = "10"
-
     # Prembly
     PREMBLY_API_BASE_URL                 = "https://api.prembly.com"
     PREMBLY_NIN_API_URL                  = "/verification/vnin"
@@ -112,6 +105,13 @@ locals {
     PREMBLY_WEBHOOK_TOKEN_CACHE_SECONDS  = "604800"
     PREMBLY_CAC_COMPANY_TYPE             = "RC"
 
+    # Dikript
+    DIKRIPT_API_BASE_URL    = "https://api.dikript.com"
+    DIKRIPT_NIN_API_URL     = "/dikript/verification/api/v1/getnin"
+    DIKRIPT_BVN_API_URL     = "/dikript/verification/api/v1/getbvn"
+    DIKRIPT_CAC_API_URL     = "/dikript/verification/api/v1/getcacbasic"
+    DIKRIPT_TIMEOUT_SECONDS = "10"
+    
     SUBSCRIPTION_RENEWAL_WATCH_INTERVAL_SECONDS = "3600"
 
     # VAT on paid tenant and landlord subscriptions and administration fees
