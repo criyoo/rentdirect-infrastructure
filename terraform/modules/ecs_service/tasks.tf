@@ -14,6 +14,11 @@ resource "aws_ecs_task_definition" "api" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
 
+  depends_on = [
+    aws_iam_role_policy_attachment.execution_managed,
+    aws_iam_role_policy.execution_parameters,
+  ]
+
   runtime_platform {
     cpu_architecture        = local.runtime_platform.cpu_architecture
     operating_system_family = local.runtime_platform.operating_system_family
@@ -67,6 +72,11 @@ resource "aws_ecs_task_definition" "payout_worker" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
 
+  depends_on = [
+    aws_iam_role_policy_attachment.execution_managed,
+    aws_iam_role_policy.execution_parameters,
+  ]
+
   runtime_platform {
     cpu_architecture        = local.runtime_platform.cpu_architecture
     operating_system_family = local.runtime_platform.operating_system_family
@@ -115,6 +125,11 @@ resource "aws_ecs_task_definition" "migration" {
   memory                   = tostring(var.worker.memory)
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
+
+  depends_on = [
+    aws_iam_role_policy_attachment.execution_managed,
+    aws_iam_role_policy.execution_parameters,
+  ]
 
   runtime_platform {
     cpu_architecture        = local.runtime_platform.cpu_architecture
