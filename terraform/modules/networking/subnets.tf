@@ -14,6 +14,7 @@ resource "aws_subnet" "public" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-public-${each.value.az}"
+    Tier = "public"
   })
 }
 
@@ -32,5 +33,6 @@ resource "aws_subnet" "private" {
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-${each.value.az}"
+    Tier = "private"
   })
 }
