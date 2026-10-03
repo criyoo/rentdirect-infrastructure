@@ -42,6 +42,7 @@ build:
 	$(COMPOSE) up --build
 	$(COMPOSE) run --rm $(API_SERVICE) python3 manage.py makemigrations
 	$(COMPOSE) run --rm $(API_SERVICE) python3 manage.py migrate
+	$(MAKE) admin
 
 up: 
 	$(COMPOSE) up
